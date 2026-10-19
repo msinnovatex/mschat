@@ -22,6 +22,7 @@ import health from '../lib/handlers/health.js';
 import presence from '../lib/handlers/presence.js';
 import typing from '../lib/handlers/typing.js';
 import profile from '../lib/handlers/profile.js';
+import usernameChange from '../lib/handlers/username.js';
 import users from '../lib/handlers/users.js';
 import settings from '../lib/handlers/settings.js';
 import blocks from '../lib/handlers/blocks.js';
@@ -57,6 +58,7 @@ const routes = new Map([
   ['presence', presence],
   ['typing', typing],
   ['profile', profile],
+  ['username', usernameChange],
   ['users', users],
   ['settings', settings],
   ['blocks', blocks],
