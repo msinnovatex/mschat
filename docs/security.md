@@ -14,6 +14,8 @@
 - R2 keys are prefix-checked before access/deletion; profile images are signature-checked after upload.
 - Private message bodies are not intentionally logged or exposed to the admin dashboard.
 
+- User ID changes require password confirmation, a per-user expiring lock, case-insensitive username claims through Firebase transactions, and a 30-day server-enforced cooldown. Internal UIDs and conversation/message records are unchanged.
+
 ## Not yet production-complete
 - No independently reviewed Signal Protocol or ratcheting implementation. The official `@signalapp/libsignal-client` npm package is published under AGPL-3.0-only and its documented npm builds target Node/native platforms rather than a supported browser bundle; it is not safe to drop into this Vite browser app without a deliberate licensing and platform integration decision. The older third-party TypeScript port has unresolved security-relevant issues, so it is not an automatic substitute. Current static ECDH/AES-GCM lacks forward secrecy and post-compromise recovery.
 - First-contact key authenticity/key transparency is not provided; local fingerprint pinning only warns about later changes on that browser.
