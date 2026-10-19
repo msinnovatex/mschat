@@ -9,23 +9,32 @@ export default function AdminLogin() {
   const [showPassword, setShowPassword] = useState(false);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
+  const [success, setSuccess] = useState('');
 
-  async function submit(event) {
+  async function submit(event, forcePasswordSignIn = false) {
     event.preventDefault();
     setBusy(true);
     setError('');
+    setSuccess('');
+    const verifyingOtp = requiresOtp && !forcePasswordSignIn;
     try {
-      const response = await fetch(requiresOtp ? '/api/auth/admin-otp-verify' : '/api/auth/login', {
+      const response = await fetch(verifyingOtp ? '/api/auth/admin-otp-verify' : '/api/auth/login', {
         method: 'POST',
         credentials: 'include',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(requiresOtp ? { identity: email.trim(), password, code } : { identity: email.trim(), password })
+        body: JSON.stringify(verifyingOtp ? { identity: email.trim(), password, code } : { identity: email.trim(), password })
       });
       const data = await response.json().catch(() => ({}));
-      if (!response.ok) throw new Error(data.message || data.error || 'Administrator sign-in failed.');
+      if (!response.ok) {
+        const failure = new Error(data.message || data.error || 'Administrator sign-in failed.');
+        failure.code = data.error;
+        throw failure;
+      }
       if (data.requiresAdminOtp) {
         setRequiresOtp(true);
+        setCode('');
         setError('');
+        setSuccess(data.message || 'A verification code was sent to your administrator email.');
         return;
       }
       if (data.user) {
@@ -38,12 +47,13 @@ export default function AdminLogin() {
       }
       throw new Error('Unexpected sign-in response. Please try again.');
     } catch (e) {
-      const message = e.message || 'Could not sign in. Please try again.';
-      setError(message);
-      if (/OTP_EXPIRED_OR_MISSING|expired or is no longer active|attempt limit/i.test(message)) {
-        setRequiresOtp(false);
+      setError(e.message || 'Could not sign in. Please try again.');
+      setSuccess('');
+      if (['OTP_EXPIRED_OR_MISSING', 'OTP_ALREADY_USED', 'OTP_ATTEMPT_LIMIT'].includes(e.code)) {
         setCode('');
-        setError('The code is no longer valid. Sign in again to request a fresh code.');
+        setError(e.code === 'OTP_ATTEMPT_LIMIT'
+          ? 'Too many incorrect attempts. Request a fresh code to continue.'
+          : 'This code is no longer valid. Request a fresh code to continue.');
       }
     } finally {
       setBusy(false);
@@ -67,8 +77,10 @@ export default function AdminLogin() {
             <label>Password<div className="input-wrap"><input type={showPassword ? 'text' : 'password'} autoComplete="current-password" value={password} onChange={e=>setPassword(e.target.value)} placeholder="Administrator password" required minLength={12} maxLength={128} disabled={requiresOtp}/><button className="show-password" type="button" onClick={()=>setShowPassword(v=>!v)} aria-label={showPassword ? 'Hide password' : 'Show password'}>{showPassword ? <EyeOff size={17}/> : <Eye size={17}/>}</button></div></label>
             {requiresOtp && <label>Email verification code<div className="input-wrap"><input inputMode="numeric" autoComplete="one-time-code" value={code} onChange={e=>setCode(e.target.value.replace(/\D/g,'').slice(0,6))} placeholder="6-digit code" required pattern="[0-9]{6}" maxLength={6}/></div><span className="field-hint">Enter the code sent to your administrator email.</span></label>}
             {error && <div className="notice error" role="alert">{error}</div>}
+            {success && <div className="notice success" role="status">{success}</div>}
             <button className="submit-btn" type="submit" disabled={busy}>{busy ? <><LoaderCircle className="spin" size={18}/> Please wait…</> : <>{requiresOtp ? 'Verify and continue' : 'Sign in securely'} <ArrowRight size={17}/></>}</button>
-            {requiresOtp && <button className="admin-login-reset" type="button" onClick={()=>{setRequiresOtp(false);setCode('');setError('')}}>Use a different sign-in attempt</button>}
+            {requiresOtp && <button className="admin-login-reset" type="button" onClick={event=>submit(event, true)} disabled={busy}>Send a fresh code</button>}
+            {requiresOtp && <button className="admin-login-reset" type="button" onClick={()=>{setRequiresOtp(false);setCode('');setError('');setSuccess('')}} disabled={busy}>Use a different sign-in attempt</button>}
           </form>
           <div className="secure-foot"><ShieldCheck size={15}/><span>Admin access is verified server-side and requires email OTP.</span></div>
         </div>
