@@ -13,7 +13,9 @@ test('Firebase rules deny all direct client reads and writes', async () => {
 test('environment example contains placeholders rather than live credentials', async () => {
   const env = await readFile('.env.example', 'utf8');
   assert.match(env, /FIREBASE_PRIVATE_KEY=/);
-  assert.match(env, /OTP_HMAC_SECRET=/);
+  // OTP digests are domain-separated from the server-only Firebase private key;
+  // this project intentionally does not require a separate OTP_HMAC_SECRET.
+  assert.match(env, /FIREBASE_PROJECT_ID=/);
   assert.match(env, /R2_SECRET_ACCESS_KEY=/);
   assert.doesNotMatch(env, /-----BEGIN PRIVATE KEY-----/);
   assert.doesNotMatch(env, /ya29\.[A-Za-z0-9_-]{20,}/);
