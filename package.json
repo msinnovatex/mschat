@@ -7,7 +7,7 @@
     "dev": "vite",
     "build": "vite build",
     "preview": "vite preview",
-    "test": "node --test",
+    "test": "node --test test/*.test.js tests/*.test.js",
     "smoke:load": "node scripts/smoke-load-test.mjs",
     "metrics:backfill": "node --env-file=.env scripts/backfill-admin-metrics.mjs"
   },
