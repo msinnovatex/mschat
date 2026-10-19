@@ -24,8 +24,9 @@ const root = getDatabase().ref('mschat');
 function countBefore(snapshot, cutoff) {
   let count = 0;
   snapshot.forEach(child => {
-    const createdAt = Number(child.child('createdAt').val());
-    if (Number.isFinite(createdAt) && createdAt < cutoff) count++;
+    const rawCreatedAt = child.child('createdAt').val();
+    const createdAt = Number(rawCreatedAt);
+    if (rawCreatedAt !== null && rawCreatedAt !== undefined && Number.isFinite(createdAt) && createdAt < cutoff) count++;
   });
   return count;
 }
