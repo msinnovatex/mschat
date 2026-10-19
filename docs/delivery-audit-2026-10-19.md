@@ -16,6 +16,7 @@ This is a source-level audit of the current `main` branch against `command.txt`,
 - Added `npm run smoke:load`, a bounded, non-destructive deployment probe for health/auth response behavior and latency percentiles; it has not been run against production.
 - Follow-up: admin dashboard now calculates currently active users from unexpired per-session presence records and open complaints from all records with `status=open`; added the complaint-status RTDB index and unit tests for active-user counting.
 - Fixed admin exact-email search validation and aligned username search validation with the registered username length policy.
+- Added a manual, dry-run-first backfill script for extant historical registration, message and report records; it is not executed automatically and must be reviewed before applying.
 
 ## Blocking gaps before claiming full acceptance
 
@@ -24,7 +25,7 @@ This is a source-level audit of the current `main` branch against `command.txt`,
 3. **Attachment validation has a trust boundary gap.** File signature and video-duration checks occur in the sender's browser before encryption; a malicious client can bypass them. Uploads are not resumable. Do not treat client validation as a server-side security control.
 4. **Production integration verification is missing.** Real Gmail OTP delivery, Firebase authorization behavior via Emulator, R2 upload/download/cleanup, and Web Push delivery have not been verified in this pass.
 6. **Security and performance verification is incomplete.** Dependency-audit CI is configured, but its run result has not been confirmed. No independent penetration test or realistic load test has been completed.
-7. **Metrics are partial.** Historical admin counters are not backfilled and provider-level storage/bandwidth metrics are not available.
+7. **Metrics are partial.** Active users and open complaints are now computed live, and R2 storage is a periodic object inventory. A manual backfill script adds extant pre-tracking registration, message and report records, but it cannot reconstruct deleted records, expired attachment uploads or historic API errors. Transfer-bandwidth metrics remain unavailable.
 8. **Automated test execution is unverified in this environment.** The GitHub status endpoint returned no check statuses for the inspected commits, and this environment could not clone the repository to run `npm test` or `npm run build` locally. Do not infer passing tests from source inspection.
 
 ## Deployment checklist
