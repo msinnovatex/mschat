@@ -22,7 +22,7 @@
     "@aws-sdk/s3-request-presigner": "^3.922.0"
   },
   "devDependencies": {
-    "@vitejs/plugin-react": "^5.0.4",
+    "@vitejs/plugin-react": "^6.1.2",
     "vite": "^7.1.7"
   },
   "engines": {
