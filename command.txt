@@ -1,0 +1,1709 @@
+MS Chat — Complete Master Development Prompt
+
+1. Your Role and Mission
+
+Act as a senior full-stack engineer, application security engineer, database architect, UI/UX designer, and QA engineer.
+
+Build MS Chat, a secure, responsive, WhatsApp-style, one-to-one messaging web application.
+
+The application must be production-oriented, mobile-first, accessible, maintainable, and designed for deployment on free or low-cost infrastructure wherever practical.
+
+Do not merely generate a UI mockup. Implement the actual frontend, backend APIs, database integration, authentication, encryption, notifications, file uploads, admin dashboard, and automated tests.
+
+Mandatory working rules
+
+1. Inspect the entire existing repository before changing anything.
+2. Identify the framework, directory structure, current deployment setup, environment variables, and reusable code.
+3. If my existing "sidik11/ebook" repository is accessible, inspect relevant security and deployment patterns for possible reuse. Do not copy its code blindly or inherit its bugs.
+4. Create an implementation plan with confirmed issues, architectural risks, and dependencies before making changes.
+5. Preserve existing working functionality unless a documented change is necessary.
+6. Implement in small, logical stages. Run relevant tests after each stage.
+7. Never claim that a feature works unless it has been implemented and verified.
+8. Never hardcode credentials, passwords, API keys, OTPs, session secrets, or administrative master passwords.
+9. Do not expose server secrets in frontend bundles, GitHub commits, browser responses, or logs.
+10. Do not make security rules public to simplify development.
+11. Never delete or overwrite unrelated database records, Cloudflare R2 objects, or other applications' data.
+12. Before modifying an existing database structure, inspect it and preserve existing data.
+13. Do not disable security controls merely to make a failing test pass.
+14. If a requested feature conflicts with the deployment platform or security architecture, explain the limitation and implement the safest compatible alternative.
+15. If access to a service, secret, account, or external resource is missing, clearly identify what I must configure manually.
+16. Do not stop after writing a plan. Continue implementing the approved scope when repository access and permissions allow it.
+17. Do not automatically deploy destructive changes or modify production data without a safe migration and explicit authorization.
+
+---
+
+2. Product Identity and Design
+
+Application name: MS Chat
+
+Product concept: Private, one-to-one messaging between registered users.
+
+Design system
+
+Use a consistent purple, black, and white design.
+
+- Primary purple: "#7C3AED"
+- Deep purple: "#5B21B6"
+- Primary text: "#111111"
+- Dark background: "#171717"
+- White: "#FFFFFF"
+- Light background: "#F8F7FC"
+
+Create a modern, polished messaging interface inspired by familiar messaging applications without copying their branding.
+
+UI requirements
+
+- Responsive layouts for Android, iPhone, tablets, laptops, and desktops.
+- Mobile-first design with touch-friendly controls.
+- Light and dark themes.
+- Smooth, restrained animations.
+- Skeleton loaders instead of unnecessary full-screen loading pages.
+- Clear empty states, error messages, retry controls, and offline indicators.
+- Accessible keyboard navigation, visible focus indicators, and appropriate contrast.
+- Consistent typography, spacing, icons, buttons, menus, dialogs, and forms.
+- Optimized images and lazy loading.
+- Avoid unnecessary animation, large bundles, and repeated API calls.
+- Maintain good Core Web Vitals and Lighthouse performance without sacrificing security or functionality.
+
+Main screens
+
+1. Landing page.
+2. Registration and login.
+3. Email OTP verification.
+4. Profile setup.
+5. Main messaging dashboard.
+6. One-to-one conversation screen.
+7. Friend requests and contacts.
+8. User search.
+9. User settings.
+10. Privacy and security settings.
+11. Notification settings.
+12. Attachment viewer.
+13. Abuse reporting.
+14. Privacy policy and terms.
+15. Account deletion.
+16. Admin dashboard at "/admin.html".
+
+---
+
+3. Required Technology Stack
+
+Use the following architecture unless the existing repository has a compelling, documented reason to differ.
+
+Frontend
+
+- React
+- Vite
+- JavaScript or TypeScript, preferably TypeScript for a new project
+- Responsive CSS or a suitable utility CSS framework
+- A maintained icon library
+- Progressive Web App support
+- IndexedDB for bounded, carefully managed client-side data storage
+
+Backend
+
+- Node.js
+- Express-compatible request handlers
+- Vercel serverless functions for deployment
+- REST APIs with consistent JSON response formats
+- Server-side input validation
+- Rate limiting and security middleware
+
+Do not assume a Vercel serverless function can run permanently or host a conventional persistent WebSocket server.
+
+Database
+
+- Firebase Realtime Database
+- Firebase Admin SDK on trusted server-side code
+- All application records belonging to this project must be scoped under "mschat/".
+
+Email verification
+
+- Gmail API for delivering numeric email OTPs.
+- Server-side OAuth credentials or another supported secure Gmail API authentication method.
+- Never expose Gmail credentials or refresh tokens to the browser.
+
+File storage
+
+- Cloudflare R2 for encrypted message attachments and profile images.
+- Use private storage and authorized, short-lived access URLs.
+- Never proxy large files through Vercel functions unnecessarily.
+
+Deployment
+
+- Frontend: Vercel.
+- Backend APIs: Vercel serverless functions.
+- Database: Firebase Realtime Database.
+- File storage: Cloudflare R2.
+- Email delivery: Gmail API.
+
+Use environment variables and deployment settings appropriately. Keep development, preview, and production configurations separate.
+
+---
+
+4. Architecture and Responsibilities
+
+Use a server-first security architecture.
+
+The browser communicates with the backend API for authenticated operations. The backend verifies the user's session and authorization before reading or modifying protected data.
+
+The backend is responsible for:
+
+- Registration and login.
+- OTP verification.
+- Session creation, validation, rotation, and revocation.
+- Friend requests and friendship authorization.
+- Message writes and server-authoritative timestamps.
+- Message receipts.
+- Conversation membership checks.
+- Attachment authorization and upload coordination.
+- Blocking and account status enforcement.
+- Administrative operations.
+- Usage aggregation and security logging.
+- Browser push notification delivery.
+
+Firebase RTDB stores application records and can provide suitable realtime primitives where the security architecture permits them.
+
+Important realtime limitation
+
+Do not give browser clients unrestricted Firebase access just to make realtime chat easier.
+
+Because authentication uses a custom application session rather than Firebase Authentication, Firebase Security Rules will not automatically know which MS Chat user owns a request.
+
+Choose and document a secure delivery architecture:
+
+1. Authenticated, cursor-based polling through backend APIs as the initial reliable option; or
+2. A separately secured realtime relay or managed realtime service when justified.
+
+Optimize polling to minimize unnecessary Firebase operations. Do not create a permanent polling loop for every inactive conversation.
+
+Use Firebase presence primitives directly only when client authentication and database rules genuinely authorize the intended operations. Otherwise, implement server-managed presence with expiration and stale-record cleanup.
+
+Never claim WebSocket support if the deployment architecture does not actually support it.
+
+---
+
+5. Firebase Namespace and Data Isolation
+
+Create a logical namespace at:
+
+"mschat/"
+
+Firebase Realtime Database does not use conventional physical folders. These are logical paths within the database.
+
+Use a consistent structure such as:
+
+mschat/
+  users/
+  usernameIndex/
+  registrationChallenges/
+  emailOtpChallenges/
+  sessions/
+  friendRequests/
+  friendships/
+  conversations/
+  conversationMembers/
+  messages/
+  messageReceipts/
+  userConversationState/
+  presence/
+  typing/
+  blocks/
+  attachmentMetadata/
+  pushSubscriptions/
+  adminUsers/
+  adminSessions/
+  adminAuditLogs/
+  reports/
+  securityEvents/
+  usageAggregates/
+  platformSettings/
+
+You may add further nodes when justified. Document the purpose, record format, authorization requirements, indexing needs, and retention rules for each node.
+
+Database rules
+
+- Initialize required structures idempotently.
+- Never reset the database during ordinary deployments.
+- Never overwrite existing data with example or default data.
+- Avoid loading entire database branches.
+- Avoid full-database scans during page loads.
+- Use targeted queries, pagination, and indexes.
+- Use transactions or atomic multi-location updates where needed.
+- Make writes idempotent where retries are possible.
+- Set restrictive Firebase Security Rules.
+- Deny unauthorized direct client reads and writes.
+- Test rules with the Firebase Emulator Suite where practical.
+- Never store Firebase service-account private keys in the database.
+
+If existing records are incompatible with the new schema, create a safe migration with validation, backups where possible, and a rollback plan.
+
+---
+
+6. Cloudflare R2 Namespace and File Isolation
+
+Use the logical object-key prefix:
+
+"mschat/"
+
+Suggested object keys:
+
+mschat/attachments/{conversationId}/{attachmentId}
+mschat/profile-images/{userId}/{imageId}
+mschat/temp-uploads/{uploadId}
+mschat/generated-assets/{assetId}
+
+R2 does not have actual directories; these are object-key prefixes.
+
+Requirements
+
+- Restrict all application operations to the "mschat/" prefix.
+- Never list, delete, modify, or overwrite unrelated objects.
+- Use private buckets.
+- Validate object ownership and conversation membership before issuing download authorization.
+- Use short-lived signed URLs when required.
+- Prefer a server-authorized upload flow that supports large encrypted files.
+- Do not expose R2 access keys to the browser.
+- Never store encryption keys alongside encrypted files in plaintext.
+- Implement cleanup for abandoned temporary uploads.
+- Avoid deleting an attachment while another valid operation still references it.
+- Log cleanup failures without exposing secrets.
+
+Create an environment-variable example containing placeholder values only.
+
+---
+
+7. Registration and Email OTP Verification
+
+Implement the complete registration process.
+
+Registration flow
+
+1. User enters an email address and password.
+2. Server validates the inputs.
+3. Server creates a registration challenge.
+4. Gmail API sends a numeric OTP.
+5. User enters the OTP.
+6. Server verifies the OTP and its associated challenge.
+7. User completes their profile.
+8. Server validates the declared age.
+9. Server reserves a unique username atomically.
+10. Server creates the account and session.
+11. User enters the main dashboard.
+
+OTP security
+
+- Generate cryptographically secure random OTPs.
+- Expire OTPs after approximately five minutes.
+- Limit verification attempts, for example to five attempts per challenge.
+- Add resend cooldowns.
+- Apply rate limits by IP address, email, and relevant account or challenge.
+- Invalidate superseded challenges where appropriate.
+- Bind the challenge to the email and intended action.
+- Consume successful OTPs atomically and exactly once.
+- Store a secure OTP digest, preferably keyed with a server-only secret, rather than raw OTPs.
+- Never log OTP values.
+- Never accept expired, reused, or mismatched OTPs.
+- Return generic errors where detailed responses would enable account enumeration.
+- Handle Gmail API outages and delivery failures gracefully.
+- Never create a verified account if the verification flow has not succeeded.
+
+Do not claim email verification succeeded merely because the email was submitted.
+
+Profile setup
+
+Collect:
+
+- Full name.
+- Unique username.
+- Date of birth.
+- Optional profile picture.
+- Optional biography.
+
+Require users to declare that they meet the minimum age of 18, and enforce the date-based age check on the server. Do not trust a frontend-only age check.
+
+Treat the date of birth as private information. Do not expose it to other users or include it in public search results.
+
+---
+
+8. Manual Authentication and Persistent Login
+
+Do not use Firebase Authentication.
+
+Implement secure application-managed authentication.
+
+Password security
+
+- Use a suitable password hashing algorithm such as Node.js "crypto.scrypt", with a unique random salt and appropriately configured parameters.
+- Alternatively, use a reputable maintained password-hashing library.
+- Never store plaintext passwords.
+- Never return password hashes to the client.
+- Validate passwords on the server.
+- Implement rate limits for login attempts.
+- Avoid revealing whether an email exists through detailed authentication errors.
+- Require reauthentication for sensitive account-security changes where appropriate.
+
+Session security
+
+Use a cryptographically random session token delivered through a cookie with:
+
+- "HttpOnly"
+- "Secure" in production
+- An appropriate "SameSite" setting
+- A narrow cookie path and sensible expiration
+- Server-side session validation
+
+Store only a secure hash of the session token in the database, not the raw token.
+
+Implement:
+
+- Session creation.
+- Session expiration.
+- Session rotation when appropriate.
+- Logout and session revocation.
+- Revoke-all-sessions functionality.
+- Session invalidation after password changes or account suspension when appropriate.
+- CSRF protection for cookie-authenticated state-changing operations.
+- Origin and request validation.
+- Protection against session fixation.
+- Reasonable idle and absolute expiration policies.
+
+Persistent login requirement
+
+The user must remain logged in after:
+
+- Closing and reopening Chrome.
+- Restarting their phone.
+- Closing and reopening the PWA.
+- Routine compatible website updates and redeployments.
+
+The user should remain logged in until logout, session revocation, session expiry, account-security action, or browser/app data being cleared.
+
+Use the persistent secure cookie for authentication. Do not store the session token or password in "localStorage" or "IndexedDB".
+
+Routine deployments must not unnecessarily change the cookie name, session-signing configuration, or session schema. Use backward-compatible migrations and preserve valid sessions.
+
+Do not store authentication state only in React memory. Restore the authenticated state by validating the secure session with the backend when the application opens.
+
+Local storage rules
+
+Use "localStorage" only for non-sensitive preferences, such as:
+
+- Theme.
+- Sidebar state.
+- Non-sensitive UI preferences.
+
+Use "IndexedDB" only for appropriate, bounded local data, such as:
+
+- Encrypted message cache.
+- Non-sensitive offline metadata.
+- Supported cryptographic protocol state when the chosen protocol requires it.
+
+Do not store plaintext passwords, reusable session tokens, or plaintext private keys in browser storage.
+
+Explain the security limitations of browser-based cryptography and client-side storage.
+
+Settings and logout
+
+Provide a clear Logout button.
+
+Logout must:
+
+1. Revoke the current server-side session.
+2. Expire the authentication cookie.
+3. Clear in-memory authentication and decrypted message content.
+4. Stop active subscriptions, polling, and presence heartbeats.
+5. Remove temporary plaintext data and pending sensitive UI state.
+6. Return the user to the login page.
+
+Do not indiscriminately erase harmless preferences or cryptographic recovery material. Account deletion and explicit secure-data reset must be separate operations with clear consequences.
+
+---
+
+9. Usernames, Search, and Profiles
+
+Implement unique usernames using a case-insensitive index.
+
+Requirements:
+
+- Prevent duplicate usernames, including case variations.
+- Reserve usernames atomically to prevent race conditions.
+- Prevent self-interactions where inappropriate.
+- Support profile updates with server-side validation.
+- Support profile picture upload, replacement, and deletion.
+- Enforce image type, size, and content validation.
+- Use private or appropriately controlled image delivery.
+- Do not expose email addresses, date of birth, password hashes, sessions, or private account metadata in search results.
+- Rate-limit user search to reduce scraping.
+- Provide pagination and sensible search limits.
+
+Profile data should distinguish public information from private account information.
+
+---
+
+10. Friend Requests, Blocking, and Permissions
+
+Implement:
+
+- Send friend request.
+- Accept request.
+- Reject request.
+- Cancel outgoing request.
+- Remove friend.
+- Block user.
+- Unblock user.
+- View incoming and outgoing requests.
+- View accepted contacts.
+
+Security rules
+
+- Users cannot send requests to themselves.
+- Prevent duplicate or conflicting requests.
+- Validate all operations on the server.
+- Only the intended recipient may accept or reject a request.
+- A blocked relationship must prevent unauthorized new interactions.
+- Blocking must prevent new messages and friend requests in the applicable direction.
+- Decide and document how existing conversations behave after blocking.
+- A user cannot bypass authorization by modifying an ID in an API request.
+- Only accepted friends may initiate or continue ordinary one-to-one messaging, subject to the documented blocking policy.
+- Handle concurrent requests and acceptance attempts safely.
+
+Do not rely on hidden buttons or frontend checks for authorization.
+
+---
+
+11. Main Dashboard and Conversation List
+
+Create a polished messaging dashboard with:
+
+- Recent conversations.
+- Older conversations through pagination.
+- Profile photos and usernames.
+- Last-message indicators without exposing plaintext message bodies to unauthorized parties.
+- Unread-message badges.
+- Last activity and online indicators according to privacy settings.
+- Conversation search.
+- Contact and friend-request access.
+- New conversation action.
+- Notification indicator.
+- Settings and logout.
+
+Ensure the interface works well on narrow mobile screens.
+
+Do not download all conversations or all historical messages at once.
+
+Maintain correct unread counts when users open a conversation, read messages, switch devices, or reconnect after being offline.
+
+---
+
+12. End-to-End Encrypted One-to-One Messaging
+
+End-to-end encryption is a core requirement, not an optional UI feature.
+
+All private message bodies and attachment contents must be encrypted on the sender's device before being sent to the backend.
+
+Cryptographic implementation
+
+Use a reputable, maintained implementation of an established secure messaging protocol, such as a suitable Signal Protocol implementation compatible with the intended web environment.
+
+Do not invent a custom cryptographic protocol.
+
+Before choosing a library, verify its current maintenance status, supported platform, license, security assumptions, and suitability for browser-based use.
+
+Document the selected protocol and its limitations.
+
+Required security properties
+
+Where supported by the selected protocol, implement:
+
+- Client-generated identity keys.
+- Secure session establishment.
+- Authenticated encryption.
+- Forward secrecy.
+- Post-compromise recovery.
+- Key rotation and ratcheting.
+- Message authentication.
+- Replay and tampering detection.
+- Identity verification.
+- Key-change warnings.
+- Secure initial and subsequent message delivery.
+- Appropriate key backup, recovery, and device-loss behavior.
+
+Private keys must never be uploaded to the backend in plaintext.
+
+The backend may store public keys and the encrypted or public protocol material required by the chosen protocol. Any private protocol state must remain protected by the client-side security model.
+
+Do not silently replace an established identity key without notifying the user.
+
+Do not pretend a device-loss recovery mechanism exists until it is implemented and tested.
+
+Message lifecycle
+
+1. Sender composes a message.
+2. Client encrypts the message for the intended recipient using the established protocol.
+3. Backend authenticates the sender and authorizes the conversation.
+4. Backend stores the encrypted payload with server-authoritative metadata.
+5. Recipient retrieves the encrypted payload.
+6. Recipient decrypts it locally.
+7. Recipient sends an authenticated delivery or read receipt.
+8. Sender sees the appropriate message status.
+
+The server, Firebase database, R2 storage, and admin dashboard must not have a general capability to decrypt private messages.
+
+Important limitations
+
+Even with E2EE, the service may expose metadata such as participants, timestamps, message counts, delivery state, IP-related security logs, and conversation relationships. Minimize and document this exposure.
+
+Browser-based E2EE has additional risks because the application JavaScript delivered by the server could be modified by a compromised deployment or malicious code. Do not claim that E2EE eliminates compromised-device or malicious-code risks.
+
+Do not advertise the app as independently audited or fully secure without appropriate independent review.
+
+Initial implementation gate
+
+Before releasing encrypted messaging:
+
+- Verify key generation and storage.
+- Verify both users derive compatible secure sessions.
+- Test successful encryption and decryption.
+- Test incorrect keys, tampered payloads, replay attempts, and changed identities.
+- Verify the backend cannot decrypt stored messages.
+- Verify message contents never appear in server logs.
+- Document any cryptographic feature not yet implemented.
+
+If a safe, compatible protocol cannot be implemented with the available dependencies, report the blocker instead of substituting insecure homemade encryption.
+
+---
+
+13. Text Messaging Features
+
+Implement:
+
+- Send and receive encrypted text messages.
+- Server-authoritative timestamps.
+- Stable message IDs.
+- Idempotency keys for safe retries.
+- Pagination and chronological ordering.
+- Retry after temporary network failure.
+- Pending, failed, and sent states.
+- Offline-aware composition.
+- Unread separators.
+- Conversation scroll preservation.
+- Message copy where appropriate.
+- Safe rendering of user-provided text.
+- Duplicate submission protection.
+
+A repeated API request must not create duplicate messages.
+
+Do not render message text as raw HTML.
+
+Delivery and read ticks
+
+Use these statuses:
+
+- Single grey tick: the server has accepted and persisted the encrypted message.
+- Double grey ticks: the recipient's client has confirmed delivery.
+- Double blue ticks: the recipient has confirmed reading.
+
+Only the recipient's authenticated client or an authorized recipient-side device may generate the corresponding receipt.
+
+The sender must never be allowed to submit a fake recipient delivery or read receipt.
+
+Make receipt transitions monotonic where appropriate and handle multiple devices consistently.
+
+Do not claim that a message was read merely because it was downloaded or a notification was delivered.
+
+---
+
+14. Typing Indicators and Online Status
+
+Implement temporary typing indicators and presence.
+
+Typing indicators
+
+- Only show typing state to authorized conversation participants.
+- Throttle updates.
+- Expire stale typing records.
+- Clear typing state after sending a message, leaving a conversation, logging out, or losing the connection where detectable.
+- Do not persist typing events as ordinary messages.
+- Avoid a database write on every keystroke.
+
+Presence
+
+- Track active sessions or devices where practical.
+- Handle multiple tabs and multiple devices.
+- Avoid marking a user offline while another valid session remains active.
+- Expire stale presence records.
+- Clean up disconnected or abandoned presence state.
+- Provide last-seen privacy controls.
+- Do not expose unnecessary online information to blocked users.
+
+Presence is approximate. A crashed browser or lost network may prevent an immediate offline event, so implement expiry and reconciliation.
+
+---
+
+15. Message Deletion
+
+Implement two distinct actions.
+
+Delete for me
+
+- Hide the message from the requesting user's conversation view.
+- Preserve the other participant's authorized view.
+- Apply the change consistently across the requesting user's devices.
+
+Delete for everyone
+
+- Allow only the authorized sender to request deletion, subject to a documented time window or policy.
+- Validate ownership and authorization on the server.
+- Replace the message with an appropriate tombstone or deletion state.
+- Update relevant conversation views and notifications.
+- Handle retries and simultaneous deletion requests safely.
+
+Deleting a message must not be represented as guaranteed erasure from screenshots, recipient exports, previously downloaded content, backups, or compromised devices.
+
+Where attachments are involved, ensure object cleanup does not break a valid remaining reference. Remove orphaned objects according to a safe retention policy.
+
+---
+
+16. Encrypted File Attachments
+
+Support these maximum limits:
+
+Type| Maximum
+Images| 50 MB
+Documents| 50 MB
+Videos| 50 MB
+Video duration| 30 seconds
+
+These limits must be enforced by the backend and upload authorization, not just by the frontend.
+
+Upload requirements
+
+- Image attachments.
+- Document attachments.
+- Video attachments.
+- Upload progress.
+- Retry after recoverable failure.
+- Cancel upload.
+- Clear size and format errors.
+- Encryption before upload.
+- Safe temporary-upload lifecycle.
+- Authorization before attachment access.
+- Orphan cleanup.
+- Mobile-friendly previews.
+- Safe download and viewing behavior.
+
+Security requirements
+
+- Validate declared MIME type against actual content and file signatures where appropriate.
+- Reject unsupported, malformed, or dangerous files.
+- Do not trust filename extensions.
+- Verify video duration through a suitable trusted validation method before accepting it as compliant.
+- Prevent unauthorized attachment access by changing object IDs.
+- Never expose R2 credentials.
+- Use short-lived authorized access URLs.
+- Never send a plaintext attachment encryption key through an untrusted public URL.
+- Do not send large file bodies through Vercel serverless functions if direct authorized R2 uploads are feasible.
+
+For encrypted attachments, generate the content encryption key on the sender's device, encrypt the file locally, and deliver the key only within the appropriate end-to-end encrypted message or protocol mechanism.
+
+The recipient must obtain the encrypted object through an authorized path and decrypt it locally.
+
+For uploads that must survive slow or unreliable connections, implement a supported multipart or resumable upload design. Do not claim resumability if the implementation starts every upload from zero.
+
+Profile images
+
+Profile images need an explicitly documented privacy policy. If they are publicly visible, explain that they are not private message attachments. If they are private, enforce authenticated access.
+
+---
+
+17. Browser Notifications and PWA Installation
+
+Implement an installable Progressive Web App and browser push notifications.
+
+PWA requirements
+
+- Valid web app manifest.
+- Application name: MS Chat.
+- Appropriate icons.
+- Theme and background colors.
+- Suitable start URL.
+- Standalone display mode.
+- Service worker.
+- Safe service-worker update lifecycle.
+- Offline fallback for supported screens.
+- Install instructions or install affordance when appropriate.
+
+Do not cache sensitive API responses, authentication responses, private message payloads, or administrative data indiscriminately.
+
+Ensure routine updates do not unnecessarily clear user preferences, login sessions, encryption state, or push subscriptions.
+
+Browser push notifications
+
+Implement Web Push using VAPID keys and a suitable maintained server-side Web Push library.
+
+Keep VAPID private keys in server-side environment variables.
+
+Support notifications for:
+
+- New messages.
+- Friend requests.
+- Friend request acceptance.
+
+Allow users to enable or disable notifications through settings.
+
+Request browser notification permission only after an explicit user action. Do not repeatedly prompt users who denied permission.
+
+Store push subscriptions under "mschat/pushSubscriptions/", associated with the authenticated user and a device or subscription identifier.
+
+Support:
+
+- Multiple devices.
+- Subscription renewal.
+- Expired subscription cleanup.
+- Failed-delivery handling.
+- Duplicate notification suppression.
+- Per-chat mute settings.
+- Notification click handling.
+- Opening the appropriate authorized conversation.
+- Suppressing unnecessary notifications when the relevant conversation is already visible and active.
+- Logout and account-deletion handling.
+- Respecting browser and operating-system notification permissions.
+
+A notification failure must never cause the original message to be lost.
+
+E2EE notification privacy
+
+The backend must not decrypt private message bodies to create notification previews.
+
+Use a generic notification such as “New encrypted message” by default.
+
+If the product offers a sender-name option, make the privacy implications clear and respect the user's settings.
+
+Never put plaintext message bodies, encryption keys, or sensitive attachment URLs in push payloads.
+
+The notification click should open MS Chat and retrieve authorized data through the normal authenticated flow.
+
+Document that push providers, the operating system, and the notification display may expose notification metadata. Notifications are best-effort and can be delayed or suppressed by browsers, power-saving policies, or operating systems.
+
+Notification testing
+
+Test:
+
+- Permission not requested.
+- Permission granted.
+- Permission denied.
+- Foreground notifications.
+- Background notifications.
+- Installed PWA notifications.
+- Multiple devices.
+- Muted conversations.
+- Duplicate suppression.
+- Expired subscriptions.
+- Invalid subscriptions.
+- Notification click navigation.
+- Logout.
+- Account deletion.
+- Service-worker updates.
+- Session expiration while a notification is clicked.
+
+---
+
+18. User Settings and Privacy
+
+Create a settings page with clearly organized sections.
+
+Account
+
+- Full name.
+- Username.
+- Profile picture.
+- Email verification status.
+- Password change.
+- Logout.
+- Revoke other sessions.
+- Account deletion.
+
+Privacy
+
+- Last-seen visibility.
+- Online-status visibility where practical.
+- Read-receipt preferences where supported.
+- Blocked users.
+- Profile visibility controls.
+
+Notifications
+
+- Browser notifications enabled or disabled.
+- Per-chat mute.
+- Notification privacy options.
+- Notification permission status.
+- Clear explanation when browser permission must be changed in system settings.
+
+Security
+
+- Active sessions where available.
+- Session revocation.
+- Identity verification.
+- Key-change warnings.
+- Recovery information.
+- Account-security guidance.
+
+Do not promise that a setting is enforced if it only changes the frontend display.
+
+---
+
+19. Admin Dashboard at "/admin.html"
+
+Create a separate administrative interface at:
+
+"https://domainurl/admin.html"
+
+The admin dashboard must be protected by server-side authentication and role-based authorization.
+
+Hiding the page or changing its URL is not a security control.
+
+Initial admin bootstrap
+
+- Do not hardcode a universal admin password.
+- Do not permit public admin registration.
+- Provide a documented, secure first-admin setup process.
+- Store administrative roles server-side.
+- Use stronger authentication for administrators, with MFA where feasible.
+- Rate-limit admin login.
+- Use separate admin sessions or equivalent privilege isolation.
+- Audit sensitive operations.
+
+Admin overview
+
+Display real, verified metrics such as:
+
+- Total registered users.
+- Verified accounts.
+- Suspended accounts.
+- Registrations over time.
+- Active users, with the measurement definition clearly stated.
+- Total conversations.
+- Total messages.
+- Message volume over time.
+- Attachment counts.
+- Report counts.
+- API request volume.
+- API error rates.
+- OTP delivery attempts and failures.
+- Security events.
+- Storage and bandwidth estimates.
+
+Do not show fake statistics or hardcoded numbers.
+
+User management
+
+Provide searchable, paginated user management with relevant fields:
+
+- User ID.
+- Full name.
+- Username.
+- Email and verification status.
+- Profile image.
+- Account creation date.
+- Account status.
+- Last authenticated activity if reliably tracked.
+- Active-session information where appropriate.
+- Storage estimates where available.
+- Reports and moderation notes.
+
+Actions may include:
+
+- View permitted account details.
+- Suspend an account.
+- Restore an account.
+- Revoke sessions.
+- Review reports.
+- Add moderation notes.
+- Initiate an account-deletion workflow.
+
+Require confirmation for destructive actions.
+
+Do not expose:
+
+- Passwords or password hashes.
+- Raw OTPs.
+- Raw session tokens.
+- Private encryption keys.
+- Plaintext private messages.
+- Decryption capabilities for private conversations.
+
+Administrators must not be able to read E2EE message contents through the ordinary admin dashboard.
+
+If a user voluntarily submits evidence in a report, handle it through an explicit, documented reporting workflow.
+
+Reports and moderation
+
+Implement:
+
+- Report submission by authenticated users.
+- Report categories.
+- Report status and priority.
+- Restricted access to report details.
+- Moderation notes.
+- Resolution tracking.
+- Appropriate retention.
+- Abuse-resistant reporting limits.
+
+Users must be able to block another user without needing an administrator.
+
+Admin audit logs
+
+Record important administrative events, including:
+
+- Authentication and failed attempts.
+- User suspension and restoration.
+- Session revocation.
+- Report access and resolution.
+- Settings changes.
+- Other sensitive administrative actions.
+
+Audit logs must not contain passwords, OTPs, raw tokens, encryption keys, or plaintext private messages.
+
+---
+
+20. Usage Analytics and Infrastructure Monitoring
+
+Build a usage dashboard using actual provider metrics where accessible and clearly labeled estimates otherwise.
+
+Track the MS Chat application without scanning the entire database for every dashboard request.
+
+Firebase metrics
+
+Where available, report:
+
+- Database storage.
+- Downloads or data transfer.
+- Reads and writes or suitable usage indicators.
+- Connection metrics.
+- Relevant errors and quota warnings.
+
+Cloudflare R2 metrics
+
+Where available, report:
+
+- Object count.
+- Stored bytes.
+- Upload and download activity.
+- Storage usage.
+- Data transfer and request metrics.
+- Failed operations.
+
+Application metrics
+
+Track:
+
+- API requests.
+- Request latency.
+- Error rates.
+- OTP volume.
+- Message writes.
+- Active sessions.
+- Notification delivery attempts.
+- Authentication failures.
+- Rate-limit events.
+- Suspicious activity.
+
+Analytics rules
+
+- Store aggregates under "mschat/usageAggregates/" where suitable.
+- Use scheduled aggregation or provider APIs where available.
+- Cache expensive reports.
+- Do not make the entire database a dashboard query.
+- Clearly distinguish exact provider-reported data from estimates.
+- Never fabricate metrics.
+- Avoid collecting unnecessary personal data.
+- Apply retention and access controls to security logs.
+
+If provider metrics cannot be retrieved automatically on the chosen plan, show a clear unavailable state or an explicitly labeled estimate.
+
+---
+
+21. Security and Abuse Prevention
+
+Treat every request from the browser as untrusted.
+
+Implement and test:
+
+- Server-side input validation.
+- Authentication on every protected route.
+- Object-level authorization.
+- CSRF protection for cookie-authenticated mutations.
+- Origin validation.
+- Appropriate CORS restrictions.
+- Rate limiting.
+- Secure HTTP headers.
+- Content Security Policy.
+- Protection against cross-site scripting.
+- Protection against SQL/NoSQL-style injection where applicable.
+- Safe output rendering.
+- Session fixation prevention.
+- Brute-force protection.
+- Request size limits.
+- File type and size validation.
+- ID enumeration resistance.
+- Duplicate operation protection.
+- Error-message sanitization.
+- Dependency vulnerability review.
+- Secret management.
+- Administrative privilege isolation.
+- Logging that avoids sensitive data.
+
+Use appropriate HSTS configuration in production when HTTPS is correctly established.
+
+Do not treat CORS as authentication.
+
+Do not disable TLS verification.
+
+Do not trust user IDs, roles, conversation IDs, attachment IDs, timestamps, prices, or receipt states simply because the browser supplied them.
+
+Abuse prevention
+
+Implement:
+
+- Message and friend-request rate limits.
+- Search rate limits.
+- OTP limits.
+- Upload limits.
+- Account suspension enforcement.
+- Blocking enforcement.
+- Report abuse protection.
+- Safe handling of repeated and concurrent requests.
+
+Use reasonable limits configured through environment variables where appropriate.
+
+---
+
+22. API Design
+
+Organize backend routes into clear modules, such as:
+
+/api/auth/
+/api/profile/
+/api/users/
+/api/friends/
+/api/conversations/
+/api/messages/
+/api/receipts/
+/api/presence/
+/api/typing/
+/api/attachments/
+/api/notifications/
+/api/settings/
+/api/reports/
+/api/admin/
+/api/health
+
+Adapt the paths to the chosen Vercel routing structure. Do not assume that every Express routing pattern works unchanged in serverless deployment.
+
+API standards
+
+Every endpoint must define:
+
+- HTTP method.
+- Authentication requirement.
+- Authorization rules.
+- Input schema.
+- Output schema.
+- Error codes.
+- Rate limits.
+- Side effects.
+- Idempotency behavior where applicable.
+- Logging requirements.
+
+Use consistent status codes and JSON response shapes.
+
+Do not return internal stack traces or secrets to users.
+
+Provide a health endpoint that reports application health without disclosing credentials, private configuration, or sensitive infrastructure details.
+
+---
+
+23. Performance and Cost Optimization
+
+The application should work within realistic free-tier and serverless constraints.
+
+Database optimization
+
+- Fetch only required records.
+- Paginate messages and user lists.
+- Use indexes where supported and needed.
+- Avoid redundant listeners and repeated polling.
+- Throttle typing and presence updates.
+- Cache non-sensitive public or static data where appropriate.
+- Use server-side aggregation for dashboard metrics.
+- Remove stale temporary records.
+- Avoid downloading entire message histories.
+- Use idempotent operations and targeted transactions.
+
+Frontend optimization
+
+- Split large bundles.
+- Lazy-load heavy screens and viewers.
+- Compress and resize suitable images.
+- Use efficient state management.
+- Avoid unnecessary component rerenders.
+- Clean up event listeners and subscriptions.
+- Cache safe static assets.
+- Use IndexedDB selectively and enforce cache limits.
+- Avoid caching sensitive responses in shared caches.
+
+Serverless optimization
+
+- Keep request handlers short and stateless.
+- Do not rely on in-memory sessions surviving between invocations.
+- Do not rely on scheduled tasks running continuously.
+- Use supported scheduled jobs for cleanup and aggregation.
+- Handle cold starts and transient failures.
+- Do not use Vercel functions as a permanent background worker.
+- Do not route large attachment bodies through serverless functions unnecessarily.
+
+Provide a realistic cost and capacity assessment after implementation. Do not promise a specific concurrent-user capacity without load testing and measured infrastructure limits.
+
+---
+
+24. Account Deletion and Data Retention
+
+Implement an explicit account-deletion workflow.
+
+Before deletion:
+
+- Clearly explain the consequences.
+- Require appropriate confirmation or reauthentication.
+- Revoke sessions.
+- Disable further account activity as appropriate.
+- Release the username only when it is safe to do so.
+- Remove or anonymize appropriate personal information.
+- Process relevant profile images and temporary objects.
+- Handle conversation and message retention according to the documented policy.
+- Clean up subscriptions and abandoned uploads.
+- Preserve legally or operationally required records only where justified and documented.
+
+E2EE creates additional deletion limitations: the service cannot guarantee erasure from recipient devices, screenshots, exports, backups, or independently retained copies.
+
+Implement cleanup as an idempotent workflow that can resume after failure. Do not perform an uncontrolled recursive deletion across the whole database or R2 bucket.
+
+---
+
+25. Privacy Policy and Terms
+
+Create clear, accurate documents explaining:
+
+- Information collected.
+- Account and profile data.
+- Email verification.
+- Message encryption.
+- What the server can and cannot access.
+- Metadata that remains visible.
+- Attachment storage.
+- Browser notifications.
+- Push-provider and operating-system metadata exposure.
+- Cookies and sessions.
+- Local browser storage.
+- Retention and deletion.
+- Blocking and reporting.
+- Account suspension.
+- Security limitations.
+- User responsibilities.
+- Contact and support process.
+
+Do not make unsupported claims such as “100% secure,” “impossible to hack,” or “all data is permanently erased.”
+
+Do not claim independent security audits unless they have actually occurred.
+
+---
+
+26. Automated Tests and Security Verification
+
+Write meaningful automated tests throughout development.
+
+Use the test framework appropriate to the existing project. For Node.js projects, Node's built-in test runner is an acceptable option where suitable.
+
+Use Firebase Emulator Suite tests for relevant database rules and behavior when practical.
+
+Authentication tests
+
+- Successful registration.
+- Invalid registration.
+- Invalid OTP.
+- Expired OTP.
+- OTP reuse.
+- Too many OTP attempts.
+- Resend throttling.
+- Duplicate username.
+- Case-insensitive username collision.
+- Wrong password.
+- Session expiration.
+- Logout.
+- Session revocation.
+- Persistent login after simulated browser restart.
+- CSRF failure.
+- Origin validation failure.
+
+Authorization tests
+
+- User A cannot read User B's private profile fields.
+- User A cannot modify User B's profile.
+- Non-friends cannot create unauthorized conversations.
+- Blocked users cannot bypass blocking.
+- Non-recipients cannot forge delivery receipts.
+- Non-recipients cannot forge read receipts.
+- Unauthorized users cannot download attachments.
+- Normal users cannot access admin endpoints.
+- Suspended accounts cannot continue protected operations.
+
+E2EE tests
+
+- Valid sender/recipient encryption and decryption.
+- Tampered ciphertext rejection.
+- Invalid authentication tags.
+- Replay protection.
+- Identity-key change handling.
+- Key-storage security assumptions.
+- No plaintext private message in server logs.
+- No server-side decryption of stored message content.
+- Attachment encryption before upload.
+- Attachment key delivery through the protected protocol.
+
+Messaging tests
+
+- Message creation.
+- Idempotent retries.
+- Pagination.
+- Unread counts.
+- Delivery transitions.
+- Read transitions.
+- Deletion for me.
+- Deletion for everyone.
+- Concurrent operations.
+- Offline recovery.
+
+Attachment tests
+
+- Files within limits.
+- Files exceeding limits.
+- Incorrect MIME type.
+- Invalid file signatures.
+- Unauthorized object access.
+- Upload cancellation.
+- Retry behavior.
+- Video duration validation.
+- Abandoned upload cleanup.
+- R2 namespace isolation.
+
+Notifications and PWA tests
+
+Test all scenarios described in Section 17.
+
+Admin tests
+
+- Unauthorized access denied.
+- Correct role enforcement.
+- Session revocation.
+- Audit logging.
+- Accurate metrics.
+- User suspension.
+- Report workflow.
+- No access to private message decryption.
+
+Deployment and regression tests
+
+- Production build.
+- API health.
+- Environment-variable validation.
+- Database connectivity.
+- Email delivery integration where credentials are available.
+- R2 upload/download integration where credentials are available.
+- Routine deployment preserving valid sessions and subscriptions.
+- Database migration safety.
+- No unexpected writes outside "mschat/".
+
+Do not use mocked success as proof of a working external integration. Label mocked tests separately from real integration tests.
+
+---
+
+27. Accessibility, Reliability, and Error Handling
+
+Implement:
+
+- Accessible form labels.
+- Keyboard navigation.
+- Appropriate ARIA attributes where needed.
+- Screen-reader-friendly status updates.
+- Visible focus indicators.
+- Useful validation errors.
+- Network error recovery.
+- Offline and reconnect states.
+- Retry with backoff for suitable transient failures.
+- Duplicate-submission prevention.
+- Safe handling of expired sessions.
+- Clear user feedback for failed uploads and messages.
+
+Do not automatically retry sensitive or non-idempotent operations without appropriate safeguards.
+
+A temporary network failure must not silently duplicate a message, consume a coupon-like one-time action, or create inconsistent account state.
+
+---
+
+28. Environment Variables and Deployment Documentation
+
+Create ".env.example" containing placeholders only.
+
+Include the variables actually required by the implemented architecture, potentially:
+
+NODE_ENV=
+APP_BASE_URL=
+ALLOWED_ORIGINS=
+
+FIREBASE_DATABASE_URL=
+FIREBASE_PROJECT_ID=
+FIREBASE_CLIENT_EMAIL=
+FIREBASE_PRIVATE_KEY=
+
+SESSION_SECRET=
+SESSION_TTL=
+
+GMAIL_CLIENT_ID=
+GMAIL_CLIENT_SECRET=
+GMAIL_REFRESH_TOKEN=
+GMAIL_SENDER_EMAIL=
+
+R2_ACCOUNT_ID=
+R2_ACCESS_KEY_ID=
+R2_SECRET_ACCESS_KEY=
+R2_BUCKET_NAME=
+R2_PUBLIC_BASE_URL=
+
+VAPID_PUBLIC_KEY=
+VAPID_PRIVATE_KEY=
+VAPID_SUBJECT=
+
+ADMIN_BOOTSTRAP_SECRET=
+
+These are examples, not a requirement to use every variable. Remove variables that are unnecessary, and add any genuinely required ones.
+
+Never put secret variables in frontend-prefixed variables such as "VITE_*".
+
+Never commit real ".env" files, service-account JSON files, refresh tokens, or private keys.
+
+Deployment guide
+
+Write a step-by-step README explaining:
+
+1. Prerequisites.
+2. Local installation.
+3. Environment-variable configuration.
+4. Firebase RTDB setup.
+5. Secure Firebase rules.
+6. Gmail API configuration.
+7. Cloudflare R2 configuration.
+8. VAPID key generation.
+9. First-admin bootstrap.
+10. Local development.
+11. Automated tests.
+12. Production build.
+13. GitHub setup.
+14. Vercel deployment.
+15. Domain and HTTPS configuration.
+16. Database initialization and migrations.
+17. Service-worker update behavior.
+18. Monitoring and troubleshooting.
+19. Account recovery and administrative security.
+20. Backup and retention considerations.
+
+Do not claim that external services have been configured unless that has been verified.
+
+---
+
+29. Required Project Structure
+
+Use a structure appropriate to the selected stack. A starting point may be:
+
+ms-chat/
+  src/
+    app/
+    components/
+    pages/
+    features/
+      auth/
+      profile/
+      friends/
+      conversations/
+      messaging/
+      attachments/
+      notifications/
+      settings/
+      admin/
+    services/
+    crypto/
+    hooks/
+    styles/
+    utils/
+
+  api/
+    auth/
+    profile/
+    users/
+    friends/
+    conversations/
+    messages/
+    receipts/
+    presence/
+    typing/
+    attachments/
+    notifications/
+    settings/
+    reports/
+    admin/
+    health.js
+
+  server/
+    middleware/
+    services/
+    repositories/
+    validation/
+    security/
+    firebase/
+    storage/
+    email/
+
+  public/
+    icons/
+    manifest.webmanifest
+    service-worker.js
+
+  tests/
+    unit/
+    integration/
+    security/
+    e2e/
+
+  docs/
+    architecture.md
+    security.md
+    privacy.md
+    deployment.md
+    database-schema.md
+    incident-response.md
+
+  .env.example
+  .gitignore
+  README.md
+
+This is a suggested structure, not a mandate. Vercel serverless routing may require a different organization. Avoid maintaining duplicate or conflicting API implementations.
+
+---
+
+30. Implementation Roadmap
+
+Complete the work in the following order.
+
+Phase 1 — Audit and architecture
+
+- Inspect the repository.
+- Review dependencies and existing code.
+- Identify security risks.
+- Document architecture and deployment constraints.
+- Confirm Firebase and R2 isolation requirements.
+- Define test strategy.
+- Report confirmed issues before making changes.
+
+Phase 2 — Foundation and design
+
+- Establish the application structure.
+- Build responsive UI components.
+- Implement the theme and navigation.
+- Set up linting, formatting, and tests.
+- Configure environment validation and safe error handling.
+
+Phase 3 — Database and backend
+
+- Implement the "mschat/" namespace.
+- Add restrictive rules and schema documentation.
+- Implement server-side repositories and APIs.
+- Test authorization and isolation.
+
+Phase 4 — Authentication
+
+- Implement registration and Gmail OTP.
+- Add secure password hashing.
+- Add persistent cookie-based sessions.
+- Implement logout and session revocation.
+- Test browser-restart persistence and session expiry.
+
+Phase 5 — Profiles and relationships
+
+- Implement profiles and username uniqueness.
+- Add search.
+- Implement friend requests.
+- Add blocking and authorization tests.
+
+Phase 6 — E2EE foundation
+
+- Select and integrate the appropriate maintained cryptographic protocol.
+- Implement identity and session lifecycle.
+- Add identity verification and key-change warnings.
+- Test encryption and decryption.
+- Resolve cryptographic design blockers before releasing messaging.
+
+Phase 7 — Text messaging
+
+- Implement encrypted message storage.
+- Add conversation lists and pagination.
+- Add retries, idempotency, unread counts, and message states.
+- Implement delivery and read receipts.
+
+Phase 8 — Presence and delivery
+
+- Implement a secure realtime or polling strategy.
+- Add online status and typing indicators.
+- Add expiry and cleanup.
+- Verify reconnect and multi-device behavior.
+
+Phase 9 — Attachments
+
+- Implement encrypted uploads and downloads.
+- Add R2 authorization.
+- Enforce file limits and validation.
+- Add progress, retries, cancellation, and orphan cleanup.
+
+Phase 10 — Delete and settings
+
+- Implement both deletion modes.
+- Add privacy settings.
+- Add session management and account deletion.
+
+Phase 11 — Admin
+
+- Secure the initial admin setup.
+- Implement role-based access.
+- Add user management, reports, audit logs, and accurate usage metrics.
+- Verify that admins cannot decrypt private messages.
+
+Phase 12 — PWA and notifications
+
+- Add manifest and service worker.
+- Implement push subscriptions and VAPID.
+- Add notification settings, muting, delivery, and click handling.
+- Test background delivery and deployment updates.
+
+Phase 13 — Security and performance hardening
+
+- Run unit, integration, authorization, and security tests.
+- Check dependencies and production build.
+- Optimize database usage.
+- Review session persistence.
+- Verify Firebase and R2 namespace isolation.
+- Run load tests where practical.
+
+Phase 14 — Deployment and handover
+
+- Deploy only after the relevant tests pass.
+- Verify production health.
+- Verify authentication and email delivery.
+- Verify R2 integration.
+- Verify notifications where the environment supports them.
+- Document outstanding limitations.
+- Provide the exact deployment and configuration steps I still need to perform.
+
+---
+
+31. Acceptance Criteria
+
+The application is not considered complete until the following requirements are satisfied.
+
+Core functionality
+
+- Users can register and verify their email.
+- Users can log in and remain logged in across routine browser restarts.
+- Users can log out and revoke sessions.
+- Profiles and unique usernames work correctly.
+- Friend requests, acceptance, rejection, removal, and blocking work.
+- Authorized users can send and receive E2EE messages.
+- Message status ticks reflect verified server and recipient events.
+- Typing and presence state expire correctly.
+- Attachments are encrypted before upload and access-controlled.
+- Message deletion follows the documented rules.
+- Settings and account deletion work as specified.
+
+Notifications
+
+- Users can install the PWA where supported.
+- Users can enable and disable push notifications.
+- Background notifications work in supported browsers and operating systems.
+- Notification clicks open the correct authorized conversation.
+- Push payloads do not contain plaintext private messages or encryption keys.
+- Routine deployments preserve valid push subscriptions.
+
+Admin and security
+
+- "/admin.html" requires authorized admin access.
+- Admin actions are logged.
+- Admin metrics are accurate or explicitly labeled estimates.
+- Administrators cannot read private E2EE message contents.
+- Users cannot access other users' private data by changing request IDs.
+- Firebase and R2 operations remain isolated to the MS Chat namespace.
+- Passwords, OTPs, session tokens, and private keys are not exposed in logs or responses.
+
+Quality
+
+- Production build succeeds.
+- Automated tests pass.
+- Known failures and unimplemented requirements are documented.
+- No real secrets are committed.
+- Deployment instructions are complete.
+- Routine deployment does not unnecessarily log out users or erase user data.
+
+---
+
+32. Final Deliverables
+
+Provide the following:
+
+1. Fully implemented source code.
+2. Responsive React frontend.
+3. Serverless backend APIs.
+4. Firebase schema and security rules.
+5. Gmail OTP integration.
+6. Persistent, secure manual authentication.
+7. E2EE implementation using a maintained protocol.
+8. Friend and blocking systems.
+9. Encrypted messaging and receipts.
+10. Encrypted R2 attachment support.
+11. PWA and browser push notifications.
+12. Admin dashboard at "/admin.html".
+13. Usage analytics and audit logging.
+14. Automated tests.
+15. ".env.example" with placeholders.
+16. README with setup and deployment instructions.
+17. Architecture and security documentation.
+18. A final report listing changes, tests, deployment status, known issues, and manual setup requirements.
+
+---
+
+33. Final Instructions to the Coding Agent
+
+Begin by auditing the repository and reporting confirmed findings.
+
+Then implement the project incrementally, following the roadmap and acceptance criteria. Do not attempt to hide architectural problems behind mock data, hardcoded success responses, permissive Firebase rules, or frontend-only authorization.
+
+For every major feature, report:
+
+- What changed.
+- Which files changed.
+- Which tests were run.
+- Which tests passed or failed.
+- Which external integrations were actually verified.
+- Any remaining security risks or limitations.
+- Any manual steps I must perform.
+
+Before finalizing, review the complete application for authorization flaws, insecure session handling, data leakage, encryption mistakes, race conditions, database overuse, incorrect admin metrics, and deployment incompatibilities.
+
+Priority order: security and data integrity first, correct functionality second, reliability third, performance fourth, and visual polish fifth.
+
+Build MS Chat as a maintainable, privacy-conscious messaging application. Do not claim production readiness until the relevant security and integration checks have been completed. , check this prompt is all features implemented? If not implement and complete
