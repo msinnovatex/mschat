@@ -46,3 +46,62 @@ form{display:grid;gap:13px}form>label{display:grid;gap:7px;font-size:11px;font-w
 /* Dedicated administrator sign-in route */
 .admin-login-shell{min-height:100vh}.admin-login-back{font-size:12px;color:var(--muted);text-decoration:none}.admin-login-wrap{min-height:calc(100vh - 92px);display:flex;align-items:center;justify-content:center;padding:36px 16px 64px}.admin-login-card{width:min(100%,480px);margin:0 auto}.admin-login-card .auth-inner{position:relative}.admin-login-card .auth-description{margin-bottom:24px}.admin-login-card form{display:grid;gap:15px}.admin-login-card form>label{display:grid;gap:7px}.admin-login-reset{border:0;background:transparent;color:var(--purple);font:600 12px 'DM Sans',sans-serif;padding:8px;cursor:pointer}.admin-login-reset:hover{text-decoration:underline}
 @media(max-width:600px){.admin-login-wrap{min-height:calc(100vh - 76px);padding:24px 12px 40px}.admin-login-card{border-radius:20px}.admin-login-back{font-size:11px}}
+
+
+/* MS Chat workspace refinement: cleaner, familiar messenger hierarchy */
+.chat-app{max-width:1500px;padding:0 22px;background:transparent}
+.chat-topbar{height:70px;position:sticky;top:0;z-index:5;background:color-mix(in srgb,var(--surface) 92%,transparent);backdrop-filter:blur(16px);padding:0 4px}
+.chat-layout{grid-template-columns: minmax(280px,340px) minmax(0,1fr);height:calc(100dvh - 124px);min-height:560px;max-height:900px;margin:18px 0 16px;border-radius:20px;box-shadow:0 12px 44px rgba(32,18,58,.08)}
+.contacts-panel{background:var(--surface)}
+.panel-heading{padding:21px 20px 17px}
+.panel-heading h2{font-size:22px;letter-spacing:-.8px}
+.friend-add input,.contact-search input{font-size:13px;padding:12px 13px}
+.friend-add button,.message-compose button{width:42px;height:42px;border-radius:13px;transition:transform .16s,background .16s}
+.friend-add button:hover,.message-compose button:hover:not(:disabled){transform:translateY(-1px);background:var(--purple-dark)}
+.contact-search{min-height:42px}
+.contact-search input{font-size:12px}
+.contact-list{padding:0 9px 12px}
+.contact-item{padding:12px 11px;border-radius:13px;gap:12px}
+.contact-item:hover{background:color-mix(in srgb,var(--soft) 75%,var(--surface))}
+.contact-item.selected{background:var(--soft);box-shadow:inset 3px 0 var(--purple)}
+.contact-avatar{width:44px;height:44px;border-radius:50%;font-size:14px}
+.contact-copy{flex:1;gap:5px}
+.contact-copy strong{font-size:13px;font-weight:700}
+.contact-copy small{font-size:11px;line-height:1.45}
+.conversation-panel{background:var(--surface)}
+.conversation-head{min-height:74px;padding:14px 22px;background:var(--surface)}
+.conversation-head .contact-avatar{width:42px;height:42px}
+.conversation-head strong{font-size:14px}
+.conversation-head small{font-size:11px}
+.message-list{padding:24px clamp(16px,4vw,42px);gap:12px;background-color:transparent}
+.message-bubble{max-width:min(72%,560px);padding:11px 14px 8px;border-radius:16px;font-size:13px;line-height:1.55;box-shadow:0 1px 1px rgba(22,12,40,.035)}
+.mine .message-bubble{background:#6d35d5;background-image:linear-gradient(135deg,#7c3aed,#6531c7);border-bottom-right-radius:5px}
+.theirs .message-bubble{background:var(--soft);border:1px solid color-mix(in srgb,var(--line) 70%,transparent);border-bottom-left-radius:5px}
+.message-bubble small{font-size:10px;margin-top:5px}
+.message-compose{padding:14px 18px 16px;gap:12px;background:var(--surface)}
+.message-compose input{min-height:46px;padding:13px 16px;font-size:13px;border-radius:999px;background:var(--soft);border-color:transparent}
+.message-compose input:focus{background:var(--surface);border-color:#a78bfa}
+.message-compose button{width:46px;height:46px;border-radius:50%}
+.incoming-list{padding:0 16px 10px}
+.incoming-item{padding:7px 8px;border-radius:10px;background:var(--soft)}
+.chat-footer{padding:0 4px 15px}
+.admin-shell{max-width:1380px;padding:0 28px}
+.admin-heading{align-items:center}
+.admin-section,.admin-stats>div{border-radius:16px}
+.admin-bootstrap{max-width:560px;border:1px solid var(--line);border-radius:22px;background:var(--surface);box-shadow:var(--shadow);padding:30px}
+.admin-bootstrap h2{letter-spacing:-.5px}
+.admin-bootstrap p{font-size:13px;line-height:1.7}
+.admin-table th{font-size:10px;text-transform:uppercase;letter-spacing:.6px}
+.admin-table td{font-size:12px}
+@media(max-width:760px){
+ .chat-app{padding:0 8px}
+ .chat-layout{height:auto;max-height:none;min-height:calc(100dvh - 110px);margin:10px 0;border-radius:16px}
+ .contacts-panel{max-height:36dvh}
+ .conversation-panel{min-height:50dvh}
+ .message-list{padding:18px 13px}
+ .message-bubble{max-width:88%;font-size:13px}
+ .conversation-head{padding:12px 14px}
+ .message-compose{padding:11px}
+ .admin-shell{padding:0 14px}
+}
+@media(prefers-reduced-motion:reduce){.contact-item,.friend-add button,.message-compose button{transition:none}}
