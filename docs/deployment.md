@@ -32,12 +32,13 @@
 ## Web Push
 Generate VAPID keys with `npx web-push generate-vapid-keys`. Set `VAPID_PUBLIC_KEY`, `VAPID_PRIVATE_KEY` and a valid `VAPID_SUBJECT`. Test on target browsers; support varies by platform.
 
-## Admin bootstrap
-1. Register and verify the intended administrator account.
-2. Set `ADMIN_EMAIL` and a long random `ADMIN_BOOTSTRAP_SECRET`.
-3. Sign in and visit `/admin.html`; enter the bootstrap secret once.
-4. Remove or rotate the bootstrap secret in every Vercel environment immediately after success.
-5. Administrator login requires password plus email OTP. Protect the mailbox and OAuth credentials.
+## Administrator credentials
+1. In Vercel, set `ADMIN_EMAIL` to the administrator email address and `ADMIN_PASSWORD` to a unique strong password (12–128 characters). Keep both server-side; never use `VITE_` prefixes.
+2. Optional: set `ADMIN_FULL_NAME` and `ADMIN_USERNAME` for the profile created on first login. The username must be available.
+3. Deploy, then open the app and sign in using the exact `ADMIN_EMAIL` and `ADMIN_PASSWORD`.
+4. On the first successful login, the server provisions or promotes the configured email to the admin role and stores only a password hash in Firebase. It then sends an administrator OTP to that email. Enter the OTP to finish signing in.
+5. After updating either admin credential, redeploy. Changing `ADMIN_PASSWORD` rotates the account password on the next successful environment-credential login.
+6. Protect the administrator mailbox and OAuth credentials. The legacy `ADMIN_BOOTSTRAP_SECRET` flow remains available only for manual bootstrap when `ADMIN_PASSWORD` is not configured.
 
 ## Vercel
 1. Import the repository and select the intended branch.
