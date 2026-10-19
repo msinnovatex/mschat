@@ -12,7 +12,6 @@ import keys from '../lib/handlers/keys/index.js';
 import pushSubscribe from '../lib/handlers/push/subscribe.js';
 import pushPublicKey from '../lib/handlers/push/public-key.js';
 import complaints from '../lib/handlers/complaints/index.js';
-import adminBootstrap from '../lib/handlers/admin/bootstrap.js';
 import admin from '../lib/handlers/admin/index.js';
 import cleanup from '../lib/handlers/cron/cleanup.js';
 import uploadUrl from '../lib/handlers/attachments/upload-url.js';
@@ -48,7 +47,6 @@ const routes = new Map([
   ['push/subscribe', pushSubscribe],
   ['push/public-key', pushPublicKey],
   ['complaints', complaints],
-  ['admin/bootstrap', adminBootstrap],
   ['admin', admin],
   ['cron/cleanup', cleanup],
   ['attachments/upload-url', uploadUrl],
