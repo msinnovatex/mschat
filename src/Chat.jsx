@@ -67,6 +67,8 @@ export default function Chat({ user, onLogout, onUserUpdated, theme = 'light', o
   const [newPassword, setNewPassword] = useState('');
   const [deletePassword, setDeletePassword] = useState('');
   const [searchResults, setSearchResults] = useState([]);
+  const [searchLoading, setSearchLoading] = useState(false);
+  const [searchError, setSearchError] = useState('');
   const [pushState, setPushState] = useState('');
   const activeFriend = useMemo(() => friends.find(f => f.id === active) || null, [friends, active]);
 
@@ -342,12 +344,15 @@ export default function Chat({ user, onLogout, onUserUpdated, theme = 'light', o
   async function changePassword(e) { e.preventDefault(); setBusy(true); setSettingsMessage(''); try { await post('/api/security', { action: 'change-password', currentPassword, newPassword }); setCurrentPassword(''); setNewPassword(''); setSettingsMessage('Password changed. Other sessions were revoked.'); await loadSessions(); } catch (e) { setSettingsMessage(e.message); } finally { setBusy(false); } }
   function searchUsers(value) {
     setUserSearch(value);
+    setSearchError('');
     if (userSearchTimer.current) clearTimeout(userSearchTimer.current);
     const q = value.trim().replace(/^@/, '').toLowerCase();
-    if (q.length < 2) { setSearchResults([]); return; }
+    if (q.length < 2) { setSearchResults([]); setSearchLoading(false); return; }
+    setSearchLoading(true);
     userSearchTimer.current = setTimeout(async () => {
       try { const data = await api('/api/users?q=' + encodeURIComponent(q)); setSearchResults(data.users || []); }
-      catch { setSearchResults([]); }
+      catch (e) { setSearchResults([]); setSearchError(e.message || 'Search failed. Please try again.'); }
+      finally { setSearchLoading(false); }
     }, 250);
   }
   async function uploadProfileImage(file) {
@@ -527,7 +532,7 @@ export default function Chat({ user, onLogout, onUserUpdated, theme = 'light', o
     </section> : activeTab==='people' ? <section className="people-directory">
       <div className="people-heading"><div><span className="directory-eyebrow">YOUR NETWORK</span><h1>Find people</h1><p>Search by full name or username and connect with people on MS Chat.</p></div></div>
       <div className="people-search-box"><Search size={19}/><input value={userSearch} onChange={e=>searchUsers(e.target.value)} placeholder="Try a name or @username" aria-label="Search by full name or username" autoComplete="off"/><span>Search</span></div>
-      <div className="people-results">{userSearch.trim().length<2 ? <div className="people-empty"><Users size={28}/><strong>Discover people</strong><p>Enter at least 2 characters to search names and usernames.</p></div> : searchResults.length===0 ? <div className="people-empty"><Search size={28}/><strong>No matching accounts yet</strong><p>Try a shorter name or a different spelling.</p></div> : searchResults.map(result=><article className="person-card" key={result.id}><span className="person-avatar">{result.avatarUrl?<img src={result.avatarUrl} alt="" loading="lazy"/>:(result.fullName||result.username||'U').slice(0,1).toUpperCase()}</span><div className="person-details"><strong>{result.fullName}</strong><span>@{result.username}</span>{result.bio&&<p>{result.bio}</p>}</div><button type="button" disabled={busy||friends.some(f=>f.id===result.id)||outgoing.some(r=>r.user?.id===result.id)} onClick={()=>sendFriendRequest(result.username)}>{friends.some(f=>f.id===result.id)?'Connected':outgoing.some(r=>r.user?.id===result.id)?'Requested':<><Plus size={16}/> Add</>}</button></article>)}</div>
+      <div className="people-results">{userSearch.trim().length<2 ? <div className="people-empty"><Users size={28}/><strong>Discover people</strong><p>Enter at least 2 characters to search names and usernames.</p></div> : searchLoading ? <div className="people-empty search-loading" role="status"><span className="search-loader"><Search size={23}/></span><strong>Finding people…</strong><p>Searching names and usernames</p></div> : searchError ? <div className="people-empty" role="alert"><Search size={28}/><strong>Search couldn’t finish</strong><p>{searchError}</p><button type="button" onClick={()=>searchUsers(userSearch)}>Try again</button></div> : searchResults.length===0 ? <div className="people-empty"><Search size={28}/><strong>No matching accounts yet</strong><p>Try a shorter name or a different spelling.</p></div> : searchResults.map(result=><article className="person-card" key={result.id}><span className="person-avatar">{result.avatarUrl?<img src={result.avatarUrl} alt="" loading="lazy"/>:(result.fullName||result.username||'U').slice(0,1).toUpperCase()}</span><div className="person-details"><strong>{result.fullName}</strong><span>@{result.username}</span>{result.bio&&<p>{result.bio}</p>}</div><button type="button" disabled={busy||friends.some(f=>f.id===result.id)||outgoing.some(r=>r.user?.id===result.id)} onClick={()=>sendFriendRequest(result.username)}>{friends.some(f=>f.id===result.id)?'Connected':outgoing.some(r=>r.user?.id===result.id)?'Requested':<><Plus size={16}/> Add</>}</button></article>)}</div>
     </section> : <div className="chat-layout">
       <aside className="contacts-panel">
         <div className="panel-heading"><div><h2>Messages</h2><p>Private one-to-one chats</p></div><span className="online-pill"><span/> Protected</span></div>
