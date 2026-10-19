@@ -165,6 +165,9 @@ export default function Chat({ user, onLogout, onUserUpdated, theme = 'light', o
 
   useEffect(() => {
     if (!activeFriend) { setMessages([]); setUnreadMessageIds([]); setRemoteKey(null); setRemoteFingerprint(''); setIsFriendTyping(false); return; }
+    // The device key is loaded asynchronously during startup. Wait for it before
+    // attempting remote-key retrieval instead of surfacing a false chat-open error.
+    if (!privateKey) return;
     let cancelled = false;
     setRemoteKey(null); setRemoteFingerprint('');
     (async () => {
@@ -539,7 +542,7 @@ export default function Chat({ user, onLogout, onUserUpdated, theme = 'light', o
         <form className="friend-add" onSubmit={addFriend}><input value={username} onChange={e=>setUsername(e.target.value)} placeholder="Add by username" maxLength={24} required/><button disabled={busy} aria-label="Send friend request"><Plus size={18}/></button></form>
         
         <div className="contact-search"><Search size={16}/><input value={search} onChange={e=>setSearch(e.target.value)} placeholder="Search contacts"/></div>
-        <div className="contact-list">{visibleFriends.map(f=><button key={f.id} className={'contact-item '+(active===f.id?'selected':'')} onClick={()=>setActive(f.id)}><span className="contact-avatar">{f.avatarUrl ? <img className="avatar-image" src={f.avatarUrl} alt="" loading="lazy"/> : f.fullName.slice(0,1).toUpperCase()}</span><span className="contact-copy"><strong>{f.fullName}</strong><small>@{f.username}</small><em>{f.unreadCount ? f.unreadCount + ' unread' : (f.lastMessageAt ? new Date(f.lastMessageAt).toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'}) : 'Encrypted conversation')}</em></span>{f.unreadCount>0&&<span className="unread-badge">{f.unreadCount>99?'99+':f.unreadCount}</span>}</button>)}{visibleFriends.length===0&&<div className="empty-contacts"><Users size={24}/><p>No contacts yet</p><small>Add a friend by username to start a conversation.</small></div>}</div>
+        <div className="contact-list">{visibleFriends.map(f=><button key={f.id} className={'contact-item '+(active===f.id?'selected':'')} onClick={()=>{setError('');setActive(f.id)}}><span className="contact-avatar">{f.avatarUrl ? <img className="avatar-image" src={f.avatarUrl} alt="" loading="lazy"/> : f.fullName.slice(0,1).toUpperCase()}</span><span className="contact-copy"><strong>{f.fullName}</strong><small>@{f.username}</small><em>{f.unreadCount ? f.unreadCount + ' unread' : (f.lastMessageAt ? new Date(f.lastMessageAt).toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'}) : 'Encrypted conversation')}</em></span>{f.unreadCount>0&&<span className="unread-badge">{f.unreadCount>99?'99+':f.unreadCount}</span>}</button>)}{visibleFriends.length===0&&<div className="empty-contacts"><Users size={24}/><p>No contacts yet</p><small>Add a friend by username to start a conversation.</small></div>}</div>
         {conversationCursor&&<button className="refresh-btn" disabled={loadingOlderConversations} onClick={loadOlderConversations}>{loadingOlderConversations?'Loading…':'Load older conversations'}</button>}
         <button className="refresh-btn" onClick={()=>refresh()}><RefreshCw size={14}/> Refresh contacts</button>
       </aside>
