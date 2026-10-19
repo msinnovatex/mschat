@@ -44,7 +44,29 @@ export default function App() {
     try { localStorage.setItem('mschat-theme', theme); } catch {}
   }, [theme]);
 
-  const update = (key, value) => setForm(old => ({ ...old, [key]: value }));
+  const update = (key, value) => {
+    setForm(old => ({ ...old, [key]: value }));
+    if (key === 'email') {
+      setOtpRequested(false); setOtpCode('');
+      setAdminOtpRequired(false); setAdminOtpCode('');
+    }
+  };
+
+  async function resendRegistrationOtp() {
+    setBusy(true); setNotice('');
+    try {
+      const response = await fetch('/api/auth/request-otp', {
+        method: 'POST', credentials: 'include', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: form.email.trim() })
+      });
+      const data = await response.json().catch(() => ({}));
+      if (!response.ok) throw new Error(data.message || data.error || 'Could not resend the verification code.');
+      setOtpCode(''); setNoticeType('success');
+      setNotice('A new code was sent. Only the newest code is valid.');
+    } catch (error) {
+      setNoticeType('error'); setNotice(error.message || 'Could not resend the code.');
+    } finally { setBusy(false); }
+  }
   async function submit(event) {
     event.preventDefault();
     setNotice('');
@@ -131,7 +153,7 @@ export default function App() {
             {mode === 'signup' && <label>Unique username<div className="input-wrap username-input"><span>@</span><input autoComplete="username" value={form.username} onChange={e=>update('username',e.target.value.replace(/\s/g,''))} placeholder="yourname" required minLength={3} maxLength={24}/></div><span className="field-hint">3–24 letters, numbers or underscores. Usernames are checked when you create your account.</span></label>}
             <label>Password<div className="input-wrap"><input type={showPassword ? 'text' : 'password'} autoComplete={mode === 'signup' ? 'new-password' : 'current-password'} value={form.password} onChange={e=>update('password',e.target.value)} placeholder={mode === 'signup' ? 'At least 12 characters recommended' : 'Your password'} required minLength={mode === 'signup' ? 12 : 1} maxLength={128}/><button className="show-password" type="button" onClick={()=>setShowPassword(!showPassword)} aria-label={showPassword ? 'Hide password' : 'Show password'}>{showPassword ? <EyeOff size={17}/> : <Eye size={17}/>}</button></div></label>
             {mode === 'login' && adminOtpRequired && <label>Administrator verification code<div className="input-wrap"><input inputMode="numeric" autoComplete="one-time-code" value={adminOtpCode} onChange={e=>setAdminOtpCode(e.target.value.replace(/\D/g,'').slice(0,6))} placeholder="000000" required pattern="[0-9]{6}" maxLength={6}/></div><span className="field-hint">A second verification step is required for administrator accounts.</span></label>}
-            {mode === 'signup' && otpRequested && <label>6-digit email verification code<div className="input-wrap"><input inputMode="numeric" autoComplete="one-time-code" value={otpCode} onChange={e=>setOtpCode(e.target.value.replace(/\D/g,'').slice(0,6))} placeholder="000000" required pattern="[0-9]{6}" maxLength={6}/></div><span className="field-hint">The code expires in 5 minutes. You can request another code after switching modes or retrying later.</span></label>}
+            {mode === 'signup' && otpRequested && <><label>6-digit email verification code<div className="input-wrap"><input inputMode="numeric" autoComplete="one-time-code" value={otpCode} onChange={e=>setOtpCode(e.target.value.replace(/\D/g,'').slice(0,6))} placeholder="000000" required pattern="[0-9]{6}" maxLength={6}/></div><span className="field-hint">The code expires in 5 minutes. Only the newest code is valid.</span></label><button className="admin-login-reset" type="button" onClick={resendRegistrationOtp} disabled={busy}>Resend verification code</button></>}
             {mode === 'signup' && <label>Date of birth<div className="input-wrap"><input type="date" value={form.dateOfBirth} onChange={e=>update('dateOfBirth',e.target.value)} max={new Date().toISOString().slice(0,10)} required/></div><span className="field-hint">Your date of birth is private and must confirm you are at least 18.</span></label>}
              {mode === 'signup' && <label className="age-check"><input type="checkbox" checked={form.ageConfirmed} onChange={e=>update('ageConfirmed',e.target.checked)}/><span>I confirm that I am at least 18 years old.</span></label>}
             {notice && <div className={`notice ${noticeType}`} role="status">{notice}</div>}
