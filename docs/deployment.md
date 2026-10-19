@@ -49,6 +49,18 @@ Generate VAPID keys with `npx web-push generate-vapid-keys`. Set `VAPID_PUBLIC_K
 Historical counters are not initialized automatically; dashboard metrics are tracked only since their recorded start time. Account deletion currently queues a pending request but does not finish all data cleanup. Do not run destructive migrations without backup and rollback plans.
 
 
+## One-time historical admin-metrics backfill
+
+The dashboard's registration, message and report counters may have started after the app already had data. The script `scripts/backfill-admin-metrics.mjs` adds counts for extant records created before each counter's tracking start. It is idempotent per counter and does not delete data. It cannot reconstruct already-deleted records, expired attachment uploads or historical API errors.
+
+1. Take a Firebase Realtime Database backup.
+2. Put server-side Firebase Admin credentials in a local, untracked `.env` file (never commit it).
+3. Run a dry run first: `npm run metrics:backfill`.
+4. Inspect the planned additions and confirm the Firebase project is the intended project.
+5. Only after reviewing the output, run `npm run metrics:backfill -- --apply`.
+6. Verify the dashboard and retain the script output with your deployment notes.
+
+The script scans existing user/report records and each conversation's message records; run it during low traffic. Do not run it concurrently from multiple machines.
 ## Non-destructive deployment smoke/load check
 
 After deployment, run a bounded unauthenticated smoke check against the deployed origin:
