@@ -1,5 +1,6 @@
 import { Fragment, useEffect, useMemo, useRef, useState } from 'react';
 import { LogOut, Plus, Send, MessageCircle, ShieldCheck, Users, CheckCheck, Check, Bell, RefreshCw, Search, Paperclip, Download, FileText, Settings, Trash2, UserRoundX } from 'lucide-react';
+import { hasExpectedSignature } from './file-validation.js';
 import { getOrCreateDeviceKey, getConversationAesKey, encryptText, decryptText, encryptBytes, decryptBytes, checkRemoteKey, trustRemoteKey, encryptAttachmentBytes, decryptAttachmentBytes } from './chat-crypto.js';
 
 async function api(url, options = {}) {
@@ -167,6 +168,7 @@ export default function Chat({ user, onLogout, onUserUpdated }) {
         setRemoteKey(key); setRemoteFingerprint(trust.fingerprint);
         const data = await api('/api/messages?conversationId=' + encodeURIComponent(activeFriend.conversationId));
         const decoded = await Promise.all((data.messages || []).map(async m => {
+          if (m.deletedForEveryone) return { ...m, text: 'This message was deleted.' };
           try {
             const clear = await decryptText(key, m.ciphertext, m.iv);
             try { const payload = JSON.parse(clear); if (payload?.type === 'attachment' && /^[a-f0-9]{32}$/.test(payload.attachmentId || '')) return { ...m, text: payload.fileName || 'Encrypted attachment', attachment: payload }; } catch {}
@@ -188,6 +190,7 @@ export default function Chat({ user, onLogout, onUserUpdated }) {
       try {
         const data = await api('/api/messages?conversationId=' + encodeURIComponent(activeFriend.conversationId));
         const decoded = await Promise.all((data.messages || []).map(async m => {
+          if (m.deletedForEveryone) return { ...m, text: 'This message was deleted.' };
           try {
             const clear = await decryptText(remoteKey, m.ciphertext, m.iv);
             try { const payload = JSON.parse(clear); if (payload?.type === 'attachment' && /^[a-f0-9]{32}$/.test(payload.attachmentId || '')) return { ...m, text: payload.fileName || 'Encrypted attachment', attachment: payload }; } catch {}
@@ -356,6 +359,7 @@ export default function Chat({ user, onLogout, onUserUpdated }) {
     setBusy(true); setSettingsMessage('');
     try {
       if (privacySettings.notificationsEnabled) {
+        if (typeof Notification === 'undefined') throw new Error('Notifications are not supported by this browser.');
         if (Notification.permission !== 'granted') { setBusy(false); await enableNotifications(); return; }
       } else if ('serviceWorker' in navigator) {
         const registration = await navigator.serviceWorker.getRegistration('/');
