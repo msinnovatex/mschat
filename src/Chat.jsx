@@ -1,5 +1,5 @@
 import { Fragment, useEffect, useMemo, useRef, useState } from 'react';
-import { LogOut, Plus, Send, MessageCircle, ShieldCheck, Users, CheckCheck, Check, Bell, RefreshCw, Search, Paperclip, Download, FileText, Settings, Trash2, UserRoundX } from 'lucide-react';
+import { LogOut, Plus, Send, MessageCircle, ShieldCheck, Users, CheckCheck, Check, Bell, RefreshCw, Search, Paperclip, Download, FileText, Settings, Trash2, UserRoundX, Sun, Moon } from 'lucide-react';
 import { hasExpectedSignature } from './file-validation.js';
 import { getOrCreateDeviceKey, getConversationAesKey, encryptText, decryptText, encryptBytes, decryptBytes, checkRemoteKey, trustRemoteKey, encryptAttachmentBytes, decryptAttachmentBytes } from './chat-crypto.js';
 
@@ -12,7 +12,7 @@ async function api(url, options = {}) {
 const post = (url, body) => api(url, { method: 'POST', body: JSON.stringify(body) });
 function uploadWithProgress(url, buffer, onProgress, contentType = 'application/octet-stream') { return new Promise((resolve, reject) => { const xhr = new XMLHttpRequest(); xhr.open('PUT', url); xhr.setRequestHeader('Content-Type', contentType); xhr.upload.onprogress = e => { if (e.lengthComputable) onProgress(Math.round(e.loaded / e.total * 100)); }; xhr.onload = () => xhr.status >= 200 && xhr.status < 300 ? resolve() : reject(new Error('File upload failed (' + xhr.status + ').')); xhr.onerror = () => reject(new Error('Network error during upload.')); xhr.send(buffer); }); }
 
-export default function Chat({ user, onLogout, onUserUpdated }) {
+export default function Chat({ user, onLogout, onUserUpdated, theme = 'light', onToggleTheme }) {
   const [friends, setFriends] = useState([]);
   const [incoming, setIncoming] = useState([]);
   const [outgoing, setOutgoing] = useState([]);
@@ -460,7 +460,7 @@ export default function Chat({ user, onLogout, onUserUpdated }) {
   const visibleFriends = friends.filter(f => (f.fullName + ' ' + f.username).toLowerCase().includes(search.toLowerCase()));
 
   return <main className="chat-app">
-    <header className="chat-topbar"><a className="brand" href="/"><span className="brand-mark"><MessageCircle size={21}/></span><span>ms<span className="brand-light">chat</span><i>.</i></span></a><div className="chat-user"><span className="user-avatar">{(profile?.avatarUrl || user.avatarUrl) ? <img className="avatar-image" src={profile?.avatarUrl || user.avatarUrl} alt="Your profile"/> : (profile?.fullName || user.fullName || 'U').slice(0,1).toUpperCase()}</span><span>{profile?.fullName || user.fullName}</span><button className="chat-icon-btn" onClick={enableNotifications} title="Enable notifications"><Bell size={17}/></button><button className="chat-icon-btn" onClick={()=>{setSettingsOpen(true);loadComplaints();loadSessions()}} title="User settings"><Settings size={17}/></button><button className="chat-icon-btn" onClick={onLogout} title="Logout"><LogOut size={17}/></button></div></header>
+    <header className="chat-topbar"><a className="brand" href="/"><span className="brand-mark"><MessageCircle size={21}/></span><span>ms<span className="brand-light">chat</span><i>.</i></span></a><div className="chat-user"><span className="user-avatar">{(profile?.avatarUrl || user.avatarUrl) ? <img className="avatar-image" src={profile?.avatarUrl || user.avatarUrl} alt="Your profile"/> : (profile?.fullName || user.fullName || 'U').slice(0,1).toUpperCase()}</span><span>{profile?.fullName || user.fullName}</span><button className="chat-icon-btn" onClick={onToggleTheme} title={theme === "light" ? "Switch to dark theme" : "Switch to light theme"} aria-label={theme === "light" ? "Switch to dark theme" : "Switch to light theme"}>{theme === "light" ? <Moon size={17}/> : <Sun size={17}/>}</button><button className="chat-icon-btn" onClick={enableNotifications} title="Enable notifications"><Bell size={17}/></button><button className="chat-icon-btn" onClick={()=>{setSettingsOpen(true);loadComplaints();loadSessions()}} title="User settings"><Settings size={17}/></button><button className="chat-icon-btn" onClick={onLogout} title="Logout"><LogOut size={17}/></button></div></header>
     <div className="chat-layout">
       <aside className="contacts-panel">
         <div className="panel-heading"><div><h2>Messages</h2><p>Private one-to-one chats</p></div><span className="online-pill"><span/> Protected</span></div>
