@@ -91,7 +91,7 @@ export default function App() {
   }
 
   const pathname = window.location.pathname.toLowerCase();
-  if (pathname === '/admin-login' || pathname === '/admin-login.html') return <AdminLogin/>;
+  if (pathname === '/admin-login' || pathname === '/admin-login.html' || ((pathname === '/admin' || pathname === '/admin.html') && !authenticatedUser)) return <AdminLogin/>;
   if (pathname === '/privacy' || pathname === '/privacy.html') return <Legal type="privacy"/>;
   if (pathname === '/terms' || pathname === '/terms.html') return <Legal type="terms"/>;
 
