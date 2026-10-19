@@ -94,8 +94,8 @@ export default function App() {
   if (pathname === '/terms' || pathname === '/terms.html') return <Legal type="terms"/>;
 
   if (checkingSession) return <main className="app-shell"><header className="topbar"><a className="brand" href="/"><span className="brand-mark"><MessageCircle size={21}/></span><span>ms<span className="brand-light">chat</span><i>.</i></span></a></header><section className="chat-empty"><span className="empty-logo"><LoaderCircle className="spin" size={28}/></span><h2>Opening your space…</h2><p>Checking your secure session.</p></section></main>;
-  if (authenticatedUser && window.location.pathname.startsWith('/admin')) return <Admin user={authenticatedUser} onLogout={logout} />;
-  if (authenticatedUser) return <Chat user={authenticatedUser} onLogout={logout} onUserUpdated={setAuthenticatedUser} />;
+  if (authenticatedUser && window.location.pathname.startsWith('/admin')) return <Admin user={authenticatedUser} onLogout={logout} theme={theme} onToggleTheme={() => setTheme(current => current === "light" ? "dark" : "light")} />;
+  if (authenticatedUser) return <Chat user={authenticatedUser} onLogout={logout} onUserUpdated={setAuthenticatedUser} theme={theme} onToggleTheme={() => setTheme(current => current === "light" ? "dark" : "light")} />;
 
   return <main className="app-shell">
     <header className="topbar">
