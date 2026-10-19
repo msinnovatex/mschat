@@ -9,16 +9,21 @@ This is a source-level audit of the current `main` branch against `command.txt`,
 - Fixed `lib/core.js`: `issueSession()` previously returned `tokenHash` before setting the `mschat_session` cookie, making the cookie assignment unreachable. It now sets the cookie before returning.
 - Added exported `sessionCookieHeader()` helper and a regression test in `test/core.test.js` for the persistent HttpOnly/SameSite cookie attributes.
 - Fixed `lib/handlers/profile.js`: the profile-update response now returns the authenticated profile-image route when an R2 image key exists, matching the profile GET response.
+- Fixed `lib/handlers/messages/index.js`: attachment linking now uses an RTDB transaction, validates expiry, and atomically claims a ready attachment so concurrent sends cannot both link it. Added pure transition tests in `test/attachment-state.test.js`.
+- Hardened `.github/workflows/ci.yml` with read-only permissions, a timeout, `npm audit --audit-level=high`, tests, and a production build; added Dependabot update configuration.
+- Added regression tests for strict origin validation and production Secure/HttpOnly/SameSite session cookies.
+- Added aggregate API-error counting to the admin metrics. Only the counter is persisted; exception/request content is not stored.
 
 ## Blocking gaps before claiming full acceptance
 
 1. **E2EE does not meet the command's acceptance criteria.** `src/chat-crypto.js` uses static ECDH/HKDF/AES-GCM and local fingerprint pinning. It is not a reviewed Signal Protocol implementation and does not provide forward secrecy, ratcheting, post-compromise recovery, authenticated first contact/key transparency, or secure multi-device key recovery. Do not market this as Signal/WhatsApp-equivalent E2EE.
 2. **Account deletion is incomplete.** `lib/handlers/account.js` disables the account and queues a request, but the cleanup worker does not process the full account-deletion workflow across user-linked RTDB records, relationships, message retention policy, profile objects, and indexes. The request must not be represented as completed deletion.
 3. **Attachment validation has a trust boundary gap.** File signature and video-duration checks occur in the sender's browser before encryption; a malicious client can bypass them. Uploads are not resumable. Do not treat client validation as a server-side security control.
-4. **Production integration verification is missing.** Real Gmail OTP delivery, Firebase authorization behavior via Emulator, R2 upload/download/cleanup, and Web Push delivery have not been verified in this pass.
-5. **Security and performance verification is incomplete.** No independent penetration test, dependency audit report, or realistic load test has been completed.
-6. **Metrics are partial.** Historical admin counters are not backfilled and provider-level storage/bandwidth metrics are not available.
-7. **Automated test execution is unverified in this environment.** The GitHub status endpoint returned no check statuses for the inspected commits, and this environment could not clone the repository to run `npm test` or `npm run build` locally. Do not infer passing tests from source inspection.
+4. **Account deletion remains incomplete.** The current API disables access and queues deletion, but a resumable worker that safely cleans all user-linked records and R2 objects has not been implemented. No destructive broad cleanup was attempted because conversation history, encryption keys, and recipient-retention semantics must be handled explicitly.
+5. **Production integration verification is missing.** Real Gmail OTP delivery, Firebase authorization behavior via Emulator, R2 upload/download/cleanup, and Web Push delivery have not been verified in this pass.
+6. **Security and performance verification is incomplete.** No independent penetration test, dependency audit report, or realistic load test has been completed.
+7. **Metrics are partial.** Historical admin counters are not backfilled and provider-level storage/bandwidth metrics are not available.
+8. **Automated test execution is unverified in this environment.** The GitHub status endpoint returned no check statuses for the inspected commits, and this environment could not clone the repository to run `npm test` or `npm run build` locally. Do not infer passing tests from source inspection.
 
 ## Deployment checklist
 
