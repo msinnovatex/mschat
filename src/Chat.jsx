@@ -42,6 +42,8 @@ export default function Chat({ user, onLogout, onUserUpdated, theme = 'light', o
   const [presenceTabId] = useState(() => { try { let id = sessionStorage.getItem('mschat_tab_id'); if (!id) { id = crypto.randomUUID().replace(/-/g, ''); sessionStorage.setItem('mschat_tab_id', id); } return id; } catch { return crypto.randomUUID().replace(/-/g, ''); } });
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [activeTab, setActiveTab] = useState('messages');
+  const [requestActionId, setRequestActionId] = useState('');
+  const [requestsRefreshing, setRequestsRefreshing] = useState(false);
   const [complaintSubject, setComplaintSubject] = useState('');
   const [complaintDescription, setComplaintDescription] = useState('');
   const [myComplaints, setMyComplaints] = useState([]);
@@ -295,8 +297,13 @@ export default function Chat({ user, onLogout, onUserUpdated, theme = 'light', o
     } catch (e) { setError(e.message); } finally { setBusy(false); }
   }
   async function respond(requestId, action) {
-    try { await post('/api/friends', { requestId, action }); await refresh(); }
-    catch (e) { setError(e.message); }
+    setRequestActionId(requestId + ':' + action);
+    setError('');
+    try {
+      await post('/api/friends', { requestId, action });
+      await refresh();
+    } catch (e) { setError(e.message); }
+    finally { setRequestActionId(''); }
   }
   useEffect(() => {
     if (!activeFriend) return;
@@ -477,9 +484,38 @@ export default function Chat({ user, onLogout, onUserUpdated, theme = 'light', o
     <nav className="workspace-tabs" aria-label="Main navigation">
       <button type="button" className={activeTab==='messages'?'active':''} onClick={()=>setActiveTab('messages')}><MessageCircle size={17}/> Messages</button>
       <button type="button" className={activeTab==='people'?'active':''} onClick={()=>setActiveTab('people')}><Users size={17}/> Find people</button>
+      <button type="button" className={activeTab==='requests'?'active':''} onClick={()=>setActiveTab('requests')}><Bell size={17}/> Requests{incoming.length>0&&<span className="tab-count">{incoming.length>99?'99+':incoming.length}</span>}</button>
       <button type="button" className={activeTab==='settings'?'active':''} onClick={()=>{setActiveTab('settings');setSettingsOpen(true);loadComplaints();loadSessions()}}><Settings size={17}/> Settings</button>
     </nav>
-    {activeTab==='people' ? <section className="people-directory">
+    {activeTab==='requests' ? <section className="request-directory">
+      <div className="request-heading">
+        <div><span className="directory-eyebrow">YOUR CONNECTIONS</span><h1>Friend requests</h1><p>Manage invitations to connect and keep track of requests you have sent.</p></div>
+        <button type="button" className="request-refresh" disabled={requestsRefreshing} onClick={()=>{setRequestsRefreshing(true);refresh().catch(e=>setError(e.message)).finally(()=>setRequestsRefreshing(false))}}><RefreshCw size={15} className={requestsRefreshing?'request-spin':''}/>{requestsRefreshing?'Refreshing':'Refresh'}</button>
+      </div>
+      {error&&<div className="request-alert" role="status">{error}<button type="button" onClick={()=>setError('')} aria-label="Dismiss message">×</button></div>}
+      <div className="request-summary">
+        <article><span className="request-summary-icon"><Bell size={18}/></span><div><small>Received</small><strong>{incoming.length}</strong><p>Waiting for your response</p></div></article>
+        <article><span className="request-summary-icon"><Users size={18}/></span><div><small>Sent</small><strong>{outgoing.length}</strong><p>Awaiting their response</p></div></article>
+      </div>
+      <div className="request-columns">
+        <section className="request-section">
+          <div className="request-section-heading"><div><h2>Received requests</h2><p>People who want to connect with you</p></div><span className="request-count">{incoming.length}</span></div>
+          {incoming.length ? <div className="request-list">{incoming.map(r=><article className="request-card" key={r.requestId}>
+            <span className="request-avatar">{(r.user.fullName||r.user.username||'U').slice(0,1).toUpperCase()}</span>
+            <div className="request-person"><strong>{r.user.fullName||r.user.username}</strong><span>@{r.user.username}</span><small>Wants to connect with you</small></div>
+            <div className="request-actions"><button type="button" className="request-accept" disabled={Boolean(requestActionId)} onClick={()=>respond(r.requestId,'accept')}>{requestActionId===r.requestId+':accept'?'Accepting…':<><Check size={15}/> Accept</>}</button><button type="button" className="request-decline" disabled={Boolean(requestActionId)} onClick={()=>respond(r.requestId,'reject')}>{requestActionId===r.requestId+':reject'?'Declining…':'Decline'}</button></div>
+          </article>)}</div> : <div className="request-empty"><span><Users size={25}/></span><strong>You’re all caught up</strong><p>New friend requests will appear here when someone wants to connect.</p><button type="button" onClick={()=>setActiveTab('people')}>Find people <Plus size={15}/></button></div>}
+        </section>
+        <section className="request-section">
+          <div className="request-section-heading"><div><h2>Sent requests</h2><p>Invitations you have already sent</p></div><span className="request-count">{outgoing.length}</span></div>
+          {outgoing.length ? <div className="request-list">{outgoing.map(r=><article className="request-card" key={r.requestId}>
+            <span className="request-avatar request-avatar-muted">{(r.user.fullName||r.user.username||'U').slice(0,1).toUpperCase()}</span>
+            <div className="request-person"><strong>{r.user.fullName||r.user.username}</strong><span>@{r.user.username}</span><small>Waiting for a response</small></div>
+            <div className="request-actions"><span className="request-pending">Pending</span><button type="button" className="request-decline" disabled={Boolean(requestActionId)} onClick={()=>respond(r.requestId,'cancel')}>{requestActionId===r.requestId+':cancel'?'Cancelling…':'Cancel'}</button></div>
+          </article>)}</div> : <div className="request-empty request-empty-compact"><span><Send size={23}/></span><strong>No sent requests</strong><p>When you invite someone, you can track it here.</p><button type="button" onClick={()=>setActiveTab('people')}>Discover people <Plus size={15}/></button></div>}
+        </section>
+      </div>
+    </section> : activeTab==='people' ? <section className="people-directory">
       <div className="people-heading"><div><span className="directory-eyebrow">YOUR NETWORK</span><h1>Find people</h1><p>Search by full name or username and connect with people on MS Chat.</p></div></div>
       <div className="people-search-box"><Search size={19}/><input value={userSearch} onChange={e=>searchUsers(e.target.value)} placeholder="Try a name or @username" aria-label="Search by full name or username" autoComplete="off"/><span>Search</span></div>
       <div className="people-results">{userSearch.trim().length<2 ? <div className="people-empty"><Users size={28}/><strong>Discover people</strong><p>Enter at least 2 characters to search names and usernames.</p></div> : searchResults.length===0 ? <div className="people-empty"><Search size={28}/><strong>No matching accounts yet</strong><p>Try a shorter name or a different spelling.</p></div> : searchResults.map(result=><article className="person-card" key={result.id}><span className="person-avatar">{result.avatarUrl?<img src={result.avatarUrl} alt="" loading="lazy"/>:(result.fullName||result.username||'U').slice(0,1).toUpperCase()}</span><div className="person-details"><strong>{result.fullName}</strong><span>@{result.username}</span>{result.bio&&<p>{result.bio}</p>}</div><button type="button" disabled={busy||friends.some(f=>f.id===result.id)||outgoing.some(r=>r.user?.id===result.id)} onClick={()=>sendFriendRequest(result.username)}>{friends.some(f=>f.id===result.id)?'Connected':outgoing.some(r=>r.user?.id===result.id)?'Requested':<><Plus size={16}/> Add</>}</button></article>)}</div>
