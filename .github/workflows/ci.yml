@@ -33,12 +33,8 @@ jobs:
       - name: Run automated tests
         run: npm test
 
-      - name: Validate native frontend assets
-        run: |
-          node --check app.js
-          test -s index.html
-          test -s styles.css
-          grep -q 'src="/app.js"' index.html
+      - name: Build production assets
+        run: npm run build
 
       - name: Audit dependencies
         run: npm audit --audit-level=high
