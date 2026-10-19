@@ -47,3 +47,14 @@ Generate VAPID keys with `npx web-push generate-vapid-keys`. Set `VAPID_PUBLIC_K
 
 ## Operational notes
 Historical counters are not initialized automatically; dashboard metrics are tracked only since their recorded start time. Account deletion currently queues a pending request but does not finish all data cleanup. Do not run destructive migrations without backup and rollback plans.
+
+
+## Non-destructive deployment smoke/load check
+
+After deployment, run a bounded unauthenticated smoke check against the deployed origin:
+
+```sh
+MSCHAT_BASE_URL=https://your-app.vercel.app npm run smoke:load
+```
+
+Optional bounds: `MSCHAT_SMOKE_REQUESTS=20` (maximum 500) and `MSCHAT_SMOKE_CONCURRENCY=5` (maximum 20). It checks `GET /api/health` and verifies that `GET /api/auth/me` rejects an unauthenticated request with 401, then reports latency percentiles. This is a small smoke/load probe only, not a production capacity test or proof that authenticated messaging, Gmail, R2, Firebase writes, or Web Push work.
