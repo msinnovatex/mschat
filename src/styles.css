@@ -272,3 +272,18 @@ form{display:grid;gap:13px}form>label{display:grid;gap:7px;font-size:11px;font-w
  .request-summary p{font-size:8px}
 }
 @media(prefers-reduced-motion:reduce){.request-spin{animation:none}.request-card,.request-actions button{transition:none}}
+
+
+/* Consistent interaction feedback across search, forms, navigation and account actions. */
+button{transition:transform .16s ease,background-color .18s ease,border-color .18s ease,box-shadow .18s ease,opacity .18s ease}
+button:active:not(:disabled){transform:scale(.975)}
+button:disabled{cursor:wait;opacity:.68}
+.person-card,.request-card,.contact-item,.auth-card,.settings-modal{animation:mschat-enter .24s ease both}
+.search-loading .search-loader{width:54px;height:54px;display:grid;place-items:center;border-radius:18px;color:#fff;background:linear-gradient(145deg,#8b5cf6,#6d28d9);animation:search-pulse 1.2s ease-in-out infinite}
+.search-loading .search-loader svg{animation:search-sweep 1.2s ease-in-out infinite}
+.people-empty[role="alert"] button{margin-top:10px;border:0;border-radius:12px;padding:10px 15px;background:var(--purple);color:white;font-weight:700}
+.people-search-box:focus-within{border-color:#8b5cf6;box-shadow:0 0 0 4px rgba(124,58,237,.12)}
+@keyframes mschat-enter{from{opacity:0;transform:translateY(7px)}to{opacity:1;transform:translateY(0)}}
+@keyframes search-pulse{0%,100%{box-shadow:0 0 0 0 rgba(124,58,237,.24);transform:scale(1)}50%{box-shadow:0 0 0 10px rgba(124,58,237,0);transform:scale(1.04)}}
+@keyframes search-sweep{0%,100%{transform:rotate(-12deg) scale(.94)}50%{transform:rotate(12deg) scale(1.08)}}
+@media(prefers-reduced-motion:reduce){*,*::before,*::after{animation-duration:.01ms!important;animation-iteration-count:1!important;scroll-behavior:auto!important;transition-duration:.01ms!important}}
