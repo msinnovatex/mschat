@@ -30,6 +30,7 @@ All application records belong below `mschat/`. Server handlers use Firebase Adm
 | `adminBootstrapUsed`, `adminAuditLogs` | Admin setup/audit metadata. Roles are enforced on server-side user records. |
 | `securityEvents/{id}` | Security events without passwords, OTPs, session tokens, keys or plaintext messages. |
 | `usageAggregates/counters/{name}` | Counters with tracking start time; not historical totals. |
+| `usageAggregates/r2Inventory` | Periodic, cursor-based inventory of object count and bytes under the `mschat/` R2 prefix; does not measure transfer bandwidth. |
 | `accountDeletionRequests/{uid}` | Pending deletion workflow; currently requires further processing. |
 
 ## Rules and indexes
