@@ -26,6 +26,7 @@
 2. Add account ID, access key, secret and bucket name to server-side variables.
 3. Configure bucket CORS for exact app origins and required PUT/GET/HEAD methods and Content-Type header.
 4. Keep keys under `mschat/attachments/` and `mschat/profile-images/`; do not configure a public bucket.
+5. Grant the R2 token permission to list objects for the bucket/prefix if you want the admin storage inventory to work; the inventory scans only the `mschat/` prefix.
 5. Test upload, complete, download, profile image replacement, deletion and cleanup against real R2. Attachment upload is not resumable.
 
 ## Web Push
