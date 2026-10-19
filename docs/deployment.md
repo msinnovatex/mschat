@@ -71,3 +71,8 @@ MSCHAT_BASE_URL=https://your-app.vercel.app npm run smoke:load
 ```
 
 Optional bounds: `MSCHAT_SMOKE_REQUESTS=20` (maximum 500) and `MSCHAT_SMOKE_CONCURRENCY=5` (maximum 20). It checks `GET /api/health` and verifies that `GET /api/auth/me` rejects an unauthenticated request with 401, then reports latency percentiles. This is a small smoke/load probe only, not a production capacity test or proof that authenticated messaging, Gmail, R2, Firebase writes, or Web Push work.
+
+
+## Change User ID
+
+The Settings screen calls `POST /api/username`. The API requires the current password, normalizes IDs case-insensitively, reserves the new username using an RTDB transaction, serializes changes with a short-lived per-user lock, and enforces a 30-day cooldown on the server. The internal UID and existing conversation/message paths do not change. The old username index is released after the profile update succeeds.
