@@ -30,3 +30,7 @@ test('blocks challenges at the attempt limit and already consumed challenges', (
   assert.equal(decideOtpAttempt({ ...base, attempts: 5 }, { now: 200, purpose: 'registration', submittedDigest: 'digest' }).status, 'attempt_limit');
   assert.equal(decideOtpAttempt({ ...base, consumed: true }, { now: 200, purpose: 'registration', submittedDigest: 'digest' }).status, 'consumed');
 });
+
+test('binds the OTP to the exact normalized recipient', () => {
+  assert.equal(decideOtpAttempt(base, { now: 200, purpose: 'registration', expectedEmail: 'other@example.com', submittedDigest: 'digest' }).status, 'email_mismatch');
+});
