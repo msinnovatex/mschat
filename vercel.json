@@ -53,10 +53,6 @@
       "destination": "/api/index?route=complaints"
     },
     {
-      "source": "/api/admin/bootstrap",
-      "destination": "/api/index?route=admin/bootstrap"
-    },
-    {
       "source": "/api/admin",
       "destination": "/api/index?route=admin"
     },
