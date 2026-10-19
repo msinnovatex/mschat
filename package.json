@@ -12,7 +12,7 @@
     "metrics:backfill": "node --env-file=.env scripts/backfill-admin-metrics.mjs"
   },
   "dependencies": {
-    "@vercel/node": "^5.3.0",
+    "@vercel/node": "^24.0.2",
     "firebase-admin": "^13.5.0",
     "googleapis": "^160.0.0",
     "lucide-react": "^0.468.0",
