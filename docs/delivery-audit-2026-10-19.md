@@ -8,6 +8,7 @@ This is a source-level audit of the current `main` branch against `command.txt`,
 
 - Fixed `lib/core.js`: `issueSession()` previously returned `tokenHash` before setting the `mschat_session` cookie, making the cookie assignment unreachable. It now sets the cookie before returning.
 - Added exported `sessionCookieHeader()` helper and a regression test in `test/core.test.js` for the persistent HttpOnly/SameSite cookie attributes.
+- Fixed `lib/handlers/profile.js`: the profile-update response now returns the authenticated profile-image route when an R2 image key exists, matching the profile GET response.
 
 ## Blocking gaps before claiming full acceptance
 
