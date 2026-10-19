@@ -287,3 +287,22 @@ button:disabled{cursor:wait;opacity:.68}
 @keyframes search-pulse{0%,100%{box-shadow:0 0 0 0 rgba(124,58,237,.24);transform:scale(1)}50%{box-shadow:0 0 0 10px rgba(124,58,237,0);transform:scale(1.04)}}
 @keyframes search-sweep{0%,100%{transform:rotate(-12deg) scale(.94)}50%{transform:rotate(12deg) scale(1.08)}}
 @media(prefers-reduced-motion:reduce){*,*::before,*::after{animation-duration:.01ms!important;animation-iteration-count:1!important;scroll-behavior:auto!important;transition-duration:.01ms!important}}
+
+
+/* Mobile messenger navigation: opening a contact must replace the list with the chat,
+   instead of placing the conversation below the fold. */
+.mobile-back-to-contacts{display:none;flex-shrink:0;width:34px;height:34px;border:1px solid var(--line);border-radius:10px;background:var(--soft);color:var(--text);font-size:24px;line-height:1;align-items:center;justify-content:center}
+@media(max-width:760px){
+ .chat-layout{display:flex;flex-direction:column;min-height:calc(100dvh - 190px);height:calc(100dvh - 190px);overflow:hidden}
+ .contacts-panel{width:100%;max-height:none;min-height:0;flex:1;border-right:0;border-bottom:0;overflow-y:auto}
+ .conversation-panel{width:100%;min-height:0;height:100%;flex:1;overflow:hidden}
+ .chat-layout.contacts-open .conversation-panel{display:none}
+ .chat-layout.conversation-open .contacts-panel{display:none}
+ .chat-layout.conversation-open .conversation-panel{display:flex;min-height:0;height:100%}
+ .chat-layout.conversation-open .mobile-back-to-contacts{display:inline-flex}
+ .conversation-head{gap:9px;flex-shrink:0}
+ .conversation-head>div{flex:1;min-width:0}
+ .conversation-head .contact-avatar{flex-shrink:0}
+ .message-list{flex:1;min-height:0;overflow-y:auto;overscroll-behavior:contain}
+ .message-compose{flex-shrink:0;padding-bottom:max(11px,env(safe-area-inset-bottom))}
+}
