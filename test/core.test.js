@@ -42,3 +42,35 @@ test('session cookie builder emits a persistent HttpOnly cookie', () => {
   assert.match(header, /Max-Age=86400/);
   assert.equal(header.includes('; Secure'), process.env.NODE_ENV === 'production');
 });
+
+test('origin policy accepts only configured exact origins and same-site requests', async () => {
+  const { checkOrigin } = await import('../lib/core.js');
+  const oldOrigins = process.env.ALLOWED_ORIGINS;
+  const oldBase = process.env.APP_BASE_URL;
+  try {
+    process.env.ALLOWED_ORIGINS = 'https://chat.example.com,http://localhost:5173';
+    delete process.env.APP_BASE_URL;
+    assert.equal(checkOrigin({ headers: { origin: 'https://chat.example.com', 'sec-fetch-site': 'same-origin' } }), true);
+    assert.equal(checkOrigin({ headers: { origin: 'https://chat.example.com.evil.test', 'sec-fetch-site': 'same-origin' } }), false);
+    assert.equal(checkOrigin({ headers: { origin: 'https://chat.example.com', 'sec-fetch-site': 'cross-site' } }), false);
+    assert.equal(checkOrigin({ headers: { 'sec-fetch-site': 'same-origin' } }), false);
+  } finally {
+    if (oldOrigins === undefined) delete process.env.ALLOWED_ORIGINS; else process.env.ALLOWED_ORIGINS = oldOrigins;
+    if (oldBase === undefined) delete process.env.APP_BASE_URL; else process.env.APP_BASE_URL = oldBase;
+  }
+});
+
+test('production session cookies are Secure, HttpOnly and SameSite=Lax', () => {
+  const previous = process.env.NODE_ENV;
+  try {
+    process.env.NODE_ENV = 'production';
+    const header = sessionCookieHeader('token with space', 3600);
+    assert.match(header, /^mschat_session=token%20with%20space;/);
+    assert.match(header, /; Secure/);
+    assert.match(header, /; HttpOnly/);
+    assert.match(header, /; SameSite=Lax/);
+    assert.match(header, /; Max-Age=3600/);
+  } finally {
+    if (previous === undefined) delete process.env.NODE_ENV; else process.env.NODE_ENV = previous;
+  }
+});
