@@ -4,9 +4,10 @@ All application records belong below `mschat/`. Server handlers use Firebase Adm
 
 | Node | Purpose |
 |---|---|
-| `users/{uid}` | Private account fields, public profile fields, password hash, status, settings and optional profile-image key. Never return password hashes or DOB to other users. |
+| `users/{uid}` | Private account fields, public profile fields, password hash, status, settings and optional profile-image key. `lastUsernameChangeAt` enforces the 30-day User ID cooldown. Never return password hashes or DOB to other users. |
 | `emails/{sha256(normalizedEmail)}` | Unique email index. |
-| `usernames/{normalizedUsername}` | Unique username index. |
+| `usernames/{normalizedUsername}` | Unique case-insensitive username index. Username changes reserve the new key transactionally before updating the profile and releasing the old key. |
+| `usernameChangeLocks/{uid}` | Short-lived per-user lock to serialize concurrent username changes; expires automatically if a request crashes. |
 | `otps/{emailHash}` | HMAC OTP digest, purpose, expiry, attempts and consumed state. |
 | `adminLoginChallenges/{uid}` | One-time admin login OTP digest and expiry. |
 | `sessions/{tokenHash}` | Session owner, expiry and last activity; no raw session token. |
