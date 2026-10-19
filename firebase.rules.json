@@ -15,7 +15,8 @@
       "complaints": {
         ".indexOn": [
           "userId",
-          "createdAt"
+          "createdAt",
+          "status"
         ]
       },
       "users": {
