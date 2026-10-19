@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { hashPassword, verifyPassword, validatePassword, normalizeEmail, normalizeUsername, sha, publicUser } from '../lib/core.js';
+import { hashPassword, verifyPassword, validatePassword, normalizeEmail, normalizeUsername, sha, publicUser, sessionCookieHeader } from '../lib/core.js';
 
 test('normalization is deterministic and case-insensitive', () => {
   assert.equal(normalizeEmail('  USER@Example.COM '), 'user@example.com');
@@ -31,4 +31,14 @@ test('public user serialization excludes password and private fields', () => {
   assert.deepEqual(Object.keys(safe).sort(), ['avatarUrl', 'createdAt', 'email', 'fullName', 'id', 'username'].sort());
   assert.equal('passwordHash' in safe, false);
   assert.equal('publicKey' in safe, false);
+});
+
+test('session cookie builder emits a persistent HttpOnly cookie', () => {
+  const header = sessionCookieHeader('random-token', 86400);
+  assert.match(header, /^mschat_session=random-token;/);
+  assert.match(header, /Path=\//);
+  assert.match(header, /HttpOnly/);
+  assert.match(header, /SameSite=Lax/);
+  assert.match(header, /Max-Age=86400/);
+  assert.doesNotMatch(header, /Secure/);
 });
