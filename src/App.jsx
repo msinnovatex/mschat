@@ -15,7 +15,10 @@ export default function App() {
   const [authenticatedUser, setAuthenticatedUser] = useState(null);
   const [checkingSession, setCheckingSession] = useState(true);
   const [showPassword, setShowPassword] = useState(false);
-  const [theme, setTheme] = useState(() => localStorage.getItem('mschat-theme') || 'light');
+  const [theme, setTheme] = useState(() => {
+    try { return localStorage.getItem('mschat-theme') === 'dark' ? 'dark' : 'light'; }
+    catch { return 'light'; }
+  });
   const [form, setForm] = useState({ name: '', email: '', username: '', password: '', dateOfBirth: '', ageConfirmed: false });
   const [busy, setBusy] = useState(false);
   const [notice, setNotice] = useState('');
@@ -37,7 +40,7 @@ export default function App() {
 
   useEffect(() => {
     document.documentElement.dataset.theme = theme;
-    localStorage.setItem('mschat-theme', theme);
+    try { localStorage.setItem('mschat-theme', theme); } catch {}
   }, [theme]);
 
   const update = (key, value) => setForm(old => ({ ...old, [key]: value }));
