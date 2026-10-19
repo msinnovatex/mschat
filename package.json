@@ -8,7 +8,8 @@
     "build": "vite build",
     "preview": "vite preview",
     "test": "node --test",
-    "smoke:load": "node scripts/smoke-load-test.mjs"
+    "smoke:load": "node scripts/smoke-load-test.mjs",
+    "metrics:backfill": "node --env-file=.env scripts/backfill-admin-metrics.mjs"
   },
   "dependencies": {
     "@vercel/node": "^5.3.0",
