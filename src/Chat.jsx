@@ -452,7 +452,10 @@ export default function Chat({ user, onLogout, onUserUpdated }) {
       await post('/api/settings', { notificationsEnabled: true });
       setPrivacySettings(s=>({...s,notificationsEnabled:true}));
       setPushState('Notifications enabled');
-    } catch (e) { setPushState(e.message); }
+    } catch (e) {
+      setPrivacySettings(settings => ({ ...settings, notificationsEnabled: false }));
+      setPushState(e.message);
+    }
   }
   const visibleFriends = friends.filter(f => (f.fullName + ' ' + f.username).toLowerCase().includes(search.toLowerCase()));
 
