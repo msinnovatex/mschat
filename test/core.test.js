@@ -40,5 +40,5 @@ test('session cookie builder emits a persistent HttpOnly cookie', () => {
   assert.match(header, /HttpOnly/);
   assert.match(header, /SameSite=Lax/);
   assert.match(header, /Max-Age=86400/);
-  assert.doesNotMatch(header, /Secure/);
+  assert.equal(header.includes('; Secure'), process.env.NODE_ENV === 'production');
 });
