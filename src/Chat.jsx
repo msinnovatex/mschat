@@ -71,7 +71,17 @@ export default function Chat({ user, onLogout, onUserUpdated, theme = 'light', o
   const activeFriend = useMemo(() => friends.find(f => f.id === active) || null, [friends, active]);
 
   async function refresh() {
-    const [data, conversationData] = await Promise.all([api('/api/friends'), api('/api/conversations')]);
+    // Friend requests and conversations are independent resources. Do not let a
+    // conversations endpoint failure prevent the Requests tab from loading.
+    const data = await api('/api/friends');
+    setIncoming(data.incoming || []);
+    setOutgoing(data.outgoing || []);
+    let conversationData = { conversations: [], nextCursor: null };
+    try {
+      conversationData = await api('/api/conversations');
+    } catch (conversationError) {
+      setError(conversationError.message || 'Could not refresh conversations.');
+    }
     const page = (conversationData.conversations || []).map(item => ({ ...item.friend, conversationId: item.conversationId, unreadCount: item.unreadCount || 0, lastMessageAt: item.updatedAt || 0 }));
     const requestedConversation = new URLSearchParams(window.location.search).get('conversation');
     if (requestedConversation) {
@@ -89,7 +99,6 @@ export default function Chat({ user, onLogout, onUserUpdated, theme = 'light', o
       const preserved = current.filter(friend => !pageIds.has(friend.id));
       return [...page, ...preserved];
     });
-    setIncoming(data.incoming || []); setOutgoing(data.outgoing || []);
     setConversationCursor(current => current ?? conversationData.nextCursor ?? null);
   }
   async function loadOlderConversations() {
