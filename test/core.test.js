@@ -28,7 +28,7 @@ test('password hashes verify without storing plaintext', async () => {
 
 test('public user serialization excludes password and private fields', () => {
   const safe = publicUser({ id: 'u1', fullName: 'Example User', username: 'example', email: 'e@example.com', passwordHash: 'secret', role: 'admin', publicKey: { x: 'secret' }, createdAt: 1 });
-  assert.deepEqual(Object.keys(safe).sort(), ['avatarUrl', 'createdAt', 'email', 'fullName', 'id', 'username'].sort());
+  assert.deepEqual(Object.keys(safe).sort(), ['avatarUrl', 'createdAt', 'email', 'fullName', 'id', 'role', 'username'].sort());
   assert.equal('passwordHash' in safe, false);
   assert.equal('publicKey' in safe, false);
 });
