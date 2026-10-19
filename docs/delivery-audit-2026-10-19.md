@@ -14,6 +14,8 @@ This is a source-level audit of the current `main` branch against `command.txt`,
 - Added regression tests for strict origin validation and production Secure/HttpOnly/SameSite session cookies.
 - Added aggregate API-error counting to the admin metrics. Only the counter is persisted; exception/request content is not stored.
 - Added `npm run smoke:load`, a bounded, non-destructive deployment probe for health/auth response behavior and latency percentiles; it has not been run against production.
+- Follow-up: admin dashboard now calculates currently active users from unexpired per-session presence records and open complaints from all records with `status=open`; added the complaint-status RTDB index and unit tests for active-user counting.
+- Fixed admin exact-email search validation and aligned username search validation with the registered username length policy.
 
 ## Blocking gaps before claiming full acceptance
 
