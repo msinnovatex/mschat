@@ -125,8 +125,12 @@ export default function App() {
   }
 
   async function logout() {
-    try { await fetch('/api/auth/logout', { method: 'POST', credentials: 'include' }); } catch {}
-    setAuthenticatedUser(null); setMode('login'); setForm({ name: '', email: '', username: '', password: '', dateOfBirth: '', ageConfirmed: false }); setOtpRequested(false); setOtpCode(''); setAdminOtpRequired(false); setAdminOtpCode('');
+    setBusy(true); setNotice('');
+    try { await fetch('/api/auth/logout', { method: 'POST', credentials: 'include' }); }
+    catch { setNoticeType('error'); setNotice('Network issue while signing out. Your local session view has been closed; reload if you are still signed in.'); }
+    finally {
+      setAuthenticatedUser(null); setMode('login'); setForm({ name: '', email: '', username: '', password: '', dateOfBirth: '', ageConfirmed: false }); setOtpRequested(false); setOtpCode(''); setAdminOtpRequired(false); setAdminOtpCode(''); setBusy(false);
+    }
   }
 
   const pathname = window.location.pathname.toLowerCase();
