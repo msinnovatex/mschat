@@ -41,3 +41,8 @@ form{display:grid;gap:13px}form>label{display:grid;gap:7px;font-size:11px;font-w
 
 /* Change User ID settings */
 .username-change-form{margin-bottom:8px}.username-change-form label{display:grid;gap:6px}.username-change-form input[readonly]{opacity:.72}.username-field-wrap{display:flex;align-items:center;gap:8px;border:1px solid var(--line);border-radius:10px;padding-left:11px;background:var(--surface);color:var(--muted)}.username-field-wrap span{font-size:12px;font-weight:800}.username-field-wrap input{border:0!important;outline:none;box-shadow:none!important;min-width:0}.username-change-note{display:block;font-size:10px;line-height:1.6;color:var(--muted);margin:0 0 10px;overflow-wrap:anywhere}.settings-help{font-size:10px;line-height:1.7;color:var(--muted);margin:-3px 0 10px}
+
+
+/* Dedicated administrator sign-in route */
+.admin-login-shell{min-height:100vh}.admin-login-back{font-size:12px;color:var(--muted);text-decoration:none}.admin-login-wrap{min-height:calc(100vh - 92px);display:flex;align-items:center;justify-content:center;padding:36px 16px 64px}.admin-login-card{width:min(100%,480px);margin:0 auto}.admin-login-card .auth-inner{position:relative}.admin-login-card .auth-description{margin-bottom:24px}.admin-login-card form{display:grid;gap:15px}.admin-login-card form>label{display:grid;gap:7px}.admin-login-reset{border:0;background:transparent;color:var(--purple);font:600 12px 'DM Sans',sans-serif;padding:8px;cursor:pointer}.admin-login-reset:hover{text-decoration:underline}
+@media(max-width:600px){.admin-login-wrap{min-height:calc(100vh - 76px);padding:24px 12px 40px}.admin-login-card{border-radius:20px}.admin-login-back{font-size:11px}}
