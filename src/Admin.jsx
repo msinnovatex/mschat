@@ -1,12 +1,12 @@
 import { useEffect, useState } from 'react';
-import { ArrowLeft, ShieldCheck, Users, MessageCircle, Ban, CheckCircle2, RefreshCw, LogOut, AlertTriangle, HardDrive, Database } from 'lucide-react';
+import { ArrowLeft, ShieldCheck, Users, MessageCircle, Ban, CheckCircle2, RefreshCw, LogOut, AlertTriangle, HardDrive, Database, Sun, Moon } from 'lucide-react';
 async function request(url, options={}) {
   const r=await fetch(url,{credentials:'include',...options,headers:{...(options.body?{'Content-Type':'application/json'}:{}),...(options.headers||{})}});
   const d=await r.json().catch(()=>({}));
   if(!r.ok) throw new Error(d.message||d.error||'Request failed');
   return d;
 }
-export default function Admin({user,onLogout}) {
+export default function Admin({user,onLogout,theme='light',onToggleTheme}) {
   const [data,setData]=useState(null),[secret,setSecret]=useState(''),[error,setError]=useState(''),[busy,setBusy]=useState(false),[accountQuery,setAccountQuery]=useState('');
   async function load(q=''){try{setData(await request('/api/admin'+(q?'?q='+encodeURIComponent(q):'')));setError('')}catch(e){setData(null);setError(e.message)}}
   useEffect(()=>{load()},[]);
