@@ -38,7 +38,13 @@ export default function AdminLogin() {
       }
       throw new Error('Unexpected sign-in response. Please try again.');
     } catch (e) {
-      setError(e.message || 'Could not sign in. Please try again.');
+      const message = e.message || 'Could not sign in. Please try again.';
+      setError(message);
+      if (/OTP_EXPIRED_OR_MISSING|expired or is no longer active|attempt limit/i.test(message)) {
+        setRequiresOtp(false);
+        setCode('');
+        setError('The code is no longer valid. Sign in again to request a fresh code.');
+      }
     } finally {
       setBusy(false);
     }
