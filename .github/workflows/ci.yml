@@ -30,11 +30,11 @@ jobs:
       - name: Install dependencies
         run: npm install --no-fund
 
-      - name: Audit dependencies
-        run: npm audit --audit-level=high
-
       - name: Run automated tests
         run: npm test
 
       - name: Build production assets
         run: npm run build
+
+      - name: Audit dependencies
+        run: npm audit --audit-level=high
